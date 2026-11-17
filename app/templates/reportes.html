@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block titulo %}Reportes y estadísticas · Bellum{% endblock %}
+{% block descripcion %}Reportes avanzados del catálogo: distribución por siglos, regiones y tipos, rankings de letalidad, países participantes y guerras sin batallas.{% endblock %}
+
+{% block pestanas %}
+<nav class="pestanas" aria-label="Reportes">
+  <a class="pestana" href="{{ url_for('portada') }}">Portada</a>
+  <a class="pestana" href="{{ url_for('guerras') }}">Índice</a>
+  <a class="pestana pestana--activa" href="{{ url_for('reportes') }}">Reportes</a>
+  <a class="pestana" href="{{ url_for('ayuda') }}">Ayuda</a>
+  <a class="pestana pestana--derecha" href="#" data-imprimir>Imprimir ⎙</a>
+</nav>
+{% endblock %}
+
+{% block contenido %}
+<header class="cabecera-articulo">
+  <h1>Reportes y estadísticas</h1>
+  <p class="cabecera-articulo__sub">
+    Consultas avanzadas calculadas en tiempo real sobre la base de datos del catálogo.
+  </p>
+</header>
+
+<nav class="indice" id="indice" aria-label="Índice de reportes">
+  <div class="indice__titulo">Contenido</div>
+  <ol>
+    <li><a href="#resumen">1 Resumen general</a></li>
+    <li><a href="#siglos">2 Guerras por siglo</a></li>
+    <li><a href="#regiones">3 Guerras por región</a></li>
+    <li><a href="#tipos">4 Guerras por tipo</a></li>
+    <li><a href="#ranking">5 Ranking de letalidad</a></li>
+    <li><a href="#duracion">6 Conflictos más largos</a></li>
+    <li><a href="#paises">7 Países protagonistas</a></li>
+    <li><a href="#top-region">8 Top por región</a></li>
+    <li><a href="#sin-batallas">9 Guerras sin batallas</a></li>
+  </ol>
+</nav>
+
+<section id="resumen" class="bloque">
+  <h2 class="titulo-seccion"><span class="titulo-seccion__filete"></span>Resumen general</h2>
+  <div class="cifras__rejilla cifras__rejilla--reportes">
+    <div class="cifra"><span class="cifra__numero">{{ resumen.total_guerras|numero }}</span><span class="cifra__texto">guerras</span></div>
+    <div class="cifra"><span class="cifra__numero">{{ resumen.total_paises|numero }}</span><span class="cifra__texto">países</span></div>
+    <div class="cifra"><span class="cifra__numero">{{ resumen.participaciones|numero }}</span><span class="cifra__texto">participaciones</span></div>
+    <div class="cifra"><span class="cifra__numero">{{ resumen.total_batallas|numero }}</span><span class="cifra__texto">batallas</span></div>
+    <div class="cifra"><span class="cifra__numero">{{ resumen.total_tratados|numero }}</span><span class="cifra__texto">tratados</span></div>
+    <div class="cifra cifra--aviso"><span class="cifra__numero">{{ resumen.guerras_en_curso|numero }}</span><span class="cifra__texto">en curso</span></div>
+    <div class="cifra cifra--ancha"><span class="cifra__numero">{{ resumen.bajas_registradas|numero }}</span><span class="cifra__texto">bajas totales documentadas</span></div>
+  </div>
+</section>
+
+<section id="siglos" class="bloque">
+  <h2 class="titulo-seccion"><span class="titulo-seccion__filete"></span>Guerras por siglo</h2>
+  {% if siglos %}
+  {% set max_siglo = siglos|map(attribute='total_guerras')|max %}
+  <div class="dos-columnas dos-columnas--amplias">
+    <div class="tabla-scroll">
+      <table class="wikitable">
+        <thead><tr><th>Siglo</th><th class="num">Guerras</th><th class="num">Bajas</th><th class="num">Promedio</th></tr></thead>
+        <tbody>
+          {% for fila in siglos %}
+          <tr>
+            <td><a href="{{ url_for('guerras', siglo=fila.siglo) }}">{{ fila.siglo }}</a></td>
+            <td class="num">{{ fila.total_guerras }}</td>
+            <td class="num">{{ fila.bajas_registradas|numero }}</td>
+            <td class="num">{{ fila.promedio_bajas|numero }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="grafico-barras">
+      {% for fila in siglos %}
+      <div class="grafico-barras__fila">
+        <span class="grafico-barras__etiqueta">{{ fila.siglo }}</span>
+        <span class="grafico-barras__barra">
+          <span style="width: {{ (fila.total_guerras / max_siglo * 100)|round(0, 'floor') }}%"></span>
+        </span>
+        <span class="grafico-barras__valor">{{ fila.total_guerras }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</section>
+
+<section id="regiones" class="bloque">
+  <h2 class="titulo-seccion"><span class="titulo-seccion__filete"></span>Guerras por región</h2>
+  <div class="tabla-scroll">
+    <table class="wikitable">
+      <thead><tr><th>Región</th><th>Continente</th><th class="num">Guerras</th><th class="num">Bajas</th><th class="num">Promedio</th></tr></thead>
+      <tbody>
+        {% for fila in regiones %}
+        <tr>
+          <td><a href="{{ url_for('guerras', region=fila.id_region) }}">{{ fila.region }}</a></td>
+          <td>{{ fila.continente }}</td>
+          <td class="num">{{ fila.total_guerras }}</td>
+          <td class="num">{{ fila.bajas_registradas|numero }}</td>
+          <td class="num">{{ fila.promedio_bajas|numero }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="tipos" class="bloque">
+  <h2 class="titulo-seccion"><span class="titulo-seccion__filete"></span>Guerras por tipo</h2>
+  <div class="rejilla-tipos">
+    {% for tipo in tipos %}
+    <a class="ficha ficha--tipo" href="{{ url_for('guerras', tipo=tipo.id_tipo) }}">
+      <span class="ficha__inicial">{{ tipo.tipo.split(' ')[-1][:1]|upper }}</span>
+      <span class="ficha__cuerpo">
+        <strong>{{ tipo.tipo }}</strong>
+        <small>{{ tipo.total_guerras }} {{ tipo.total_guerras|plural('guerra', 'guerras') }} · {{ tipo.bajas_registradas|numero }} bajas</small>
+      </span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+
+<section id="ranking" class="bloque">
+  <h2 class="titulo-seccion"><span class="titulo-seccion__filete"></span>Ranking de letalidad</h2>
+  <p class="nota">Las diez guerras con más bajas totales registradas.</p>
+  <div class="tabla-scroll">
+    <table class="wikitable">
+      <thead><tr><th>#</th><th>Guerra</th><th>Siglo</th><th>Región</th><th class="num">Bajas</th></tr></thead>
+      <tbody>
+        {% for fila in letales %}
+        <tr>
+          <td class="num">{{ loop.index }}</td>
+          <td><a href="{{ url_for('guerra', id_guerra=fila.id_guerra) }}">{{ fila.nombre }}</a></td>
+          <td>{{ fila.siglo }}</td>
+          <td>{{ fila.region }}</td>
+          <td class="num">{{ fila.bajas_totales|numero }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="duracion" class="bloque">
+  <h2 class="titulo-seccion"><span class="titulo-seccion__filete"></span>Conflictos más largos</h2>
+  <div class="tabla-scroll">
+    <table class="wikitable">
+      <thead><tr><th>#</th><th>Guerra</th><th>Inicio</th><th>Fin</th><th class="num">Duración</th></tr></thead>
+      <tbody>
+        {% for fila in largas %}
+        <tr>
+          <td class="num">{{ loop.index }}</td>
+          <td><a href="{{ url_for('guerra', id_guerra=fila.id_guerra) }}">{{ fila.nombre }}</a></td>
+          <td>{{ fila.anio_inicio|anio }}</td>
+          <td>{{ fila.anio_fin|anio if fila.anio_fin else 'En curso' }}</td>
+          <td class="num">{{ fila.duracion_anios }} {{ fila.duracion_anios|plural('año', 'años') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div class="dos-columnas dos-columnas--amplias" id="paises">
+  <section class="bloque">
+    <h2 class="titulo-seccion"><span class="titulo-seccion__filete"></span>Países con más participaciones</h2>
+    <div class="tabla-scroll">
+      <table class="wikitable">
+        <thead><tr><th>#</th><th>País</th><th class="num">Guerras</th><th class="num">Bajas</th></tr></thead>
+        <tbody>
+          {% for fila in paises %}
+          <tr>
+            <td class="num">{{ loop.index }}</td>
+            <td><a href="{{ url_for('pais', id_pais=fila.id_pais) }}">{{ fila.pais }}</a></td>
+            <td class="num">{{ fila.guerras }}</td>
+            <td class="num">{{ fila.bajas_registradas|numero }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="bloque">
+    <h2 class="titulo-seccion"><span class="titulo-seccion__filete"></span>Países con más victorias</h2>
+    <div class="tabla-scroll">
+      <table class="wikitable">
+        <thead><tr><th>#</th><th>País</th><th class="num">Bandos victoriosos</th></tr></thead>
+        <tbody>
+          {% for fila in victorias %}
+          <tr>
+            <td class="num">{{ loop.index }}</td>
+            <td><a href="{{ url_for('pais', id_pais=fila.id_pais) }}">{{ fila.pais }}</a></td>
+            <td class="num">{{ fila.victorias }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<section id="top-region" class="bloque">
+  <h2 class="titulo-seccion"><span class="titulo-seccion__filete"></span>Top 3 por región</h2>
+  <p class="nota">Consulta con función de ventana <code>RANK()</code>: las tres guerras más letales de cada región.</p>
+  <div class="tabla-scroll">
+    <table class="wikitable">
+      <thead><tr><th>Región</th><th>Puesto</th><th>Guerra</th><th class="num">Bajas</th></tr></thead>
+      <tbody>
+        {% for fila in top_region %}
+        <tr>
+          <td>{{ fila.region }}</td>
+          <td class="num">{{ fila.posicion }}</td>
+          <td><a href="{{ url_for('guerra', id_guerra=fila.id_guerra) }}">{{ fila.guerra }}</a></td>
+          <td class="num">{{ fila.bajas_totales|numero }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="sin-batallas" class="bloque">
+  <h2 class="titulo-seccion"><span class="titulo-seccion__filete"></span>Guerras sin batallas registradas</h2>
+  <p class="nota">Conflictos que aún no tienen enfrentamientos documentados en el catálogo.</p>
+  {% if sin_batallas %}
+  <div class="tabla-scroll">
+    <table class="wikitable">
+      <thead><tr><th>Guerra</th><th>Periodo</th><th>Siglo</th></tr></thead>
+      <tbody>
+        {% for fila in sin_batallas %}
+        <tr>
+          <td><a href="{{ url_for('guerra', id_guerra=fila.id_guerra) }}">{{ fila.nombre }}</a></td>
+          <td class="nowrap">{{ fila.anio_inicio|rango_anios(fila.anio_fin) }}</td>
+          <td>{{ fila.siglo }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p>Todas las guerras tienen al menos una batalla registrada.</p>
+  {% endif %}
+</section>
+{% endblock %}

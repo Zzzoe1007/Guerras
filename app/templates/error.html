@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ titulo }} · Bellum{% endblock %}
+{% block descripcion %}{{ titulo }}: {{ mensaje }}{% endblock %}
+
+{% block contenido %}
+<div class="pagina-error">
+  <p class="pagina-error__codigo">{{ codigo }}</p>
+  <h1>{{ titulo }}</h1>
+  <p class="pagina-error__mensaje">{{ mensaje }}</p>
+
+  {% if mostrar_ayuda_bd %}
+  <div class="aviso-articulo aviso-articulo--error">
+    <h2>¿Cómo resolverlo?</h2>
+    <ol>
+      <li>Comprueba que el servidor MySQL o MariaDB esté iniciado.</li>
+      <li>Verifica las variables <code>DB_HOST</code>, <code>DB_PORT</code>,
+        <code>DB_USER</code>, <code>DB_PASSWORD</code> y <code>DB_NAME</code>.</li>
+      <li>Importa <code>sql/catalogo_guerras.sql</code> si la base de datos
+        todavía no existe.</li>
+    </ol>
+    <p class="nota">Consulta la <a href="{{ url_for('ayuda') }}#problemas">sección de ayuda</a>
+      para más detalles.</p>
+  </div>
+  {% endif %}
+
+  <div class="pagina-error__acciones">
+    <a class="boton boton--primario" href="{{ url_for('portada') }}">Volver a la portada</a>
+    <a class="boton boton--secundario" href="{{ url_for('guerras') }}">Ver el índice de guerras</a>
+  </div>
+</div>
+{% endblock %}

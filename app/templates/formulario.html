@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ 'Editar' if modo == 'editar' else 'Crear' }} una guerra · Bellum{% endblock %}
+{% block descripcion %}Formulario para {{ 'editar' if modo == 'editar' else 'añadir' }} una guerra al catálogo histórico.{% endblock %}
+
+{% block pestanas %}
+<nav class="pestanas" aria-label="Formulario">
+  <a class="pestana" href="{{ url_for('guerras') }}">Índice</a>
+  <a class="pestana pestana--activa" href="{{ url_for('nueva') }}">{{ 'Editar artículo' if modo == 'editar' else 'Crear artículo' }}</a>
+  <a class="pestana" href="{{ url_for('reportes') }}">Reportes</a>
+  <a class="pestana pestana--derecha" href="{{ url_for('aleatoria') }}">Aleatoria ⤮</a>
+</nav>
+{% endblock %}
+
+{% block contenido %}
+<header class="cabecera-articulo">
+  <h1>{{ 'Editar «' ~ guerra.nombre ~ '»' if modo == 'editar' else 'Añadir una guerra' }}</h1>
+  <p class="cabecera-articulo__sub">
+    Los campos marcados con <span class="obligatorio">*</span> son obligatorios.
+    Los años anteriores a Cristo se escriben en negativo (por ejemplo, <code>-499</code> para el 499 a.C.).
+  </p>
+</header>
+
+<div class="formulario-layout">
+  <form class="formulario" method="post" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <fieldset>
+      <legend>Identificación del conflicto</legend>
+
+      <div class="campo">
+        <label for="nombre">Nombre de la guerra <span class="obligatorio">*</span></label>
+        <input id="nombre" name="nombre" type="text" maxlength="150" required
+               value="{{ datos.get('nombre') or '' }}"
+               placeholder="Ej.: Guerra del Peloponeso">
+        <p class="ayuda-campo">Nombre único con el que aparecerá en el catálogo.</p>
+      </div>
+
+      <div class="formulario__dos">
+        <div class="campo">
+          <label for="id_tipo">Tipo de conflicto <span class="obligatorio">*</span></label>
+          <select id="id_tipo" name="id_tipo" required>
+            <option value="">Selecciona un tipo…</option>
+            {% for tipo in catalogos.tipos %}
+            <option value="{{ tipo.id_tipo }}" {% if datos.get('id_tipo')|string == tipo.id_tipo|string %}selected{% endif %}>{{ tipo.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="campo">
+          <label for="id_region">Región histórica <span class="obligatorio">*</span></label>
+          <select id="id_region" name="id_region" required>
+            <option value="">Selecciona una región…</option>
+            {% for region in catalogos.regiones %}
+            <option value="{{ region.id_region }}" {% if datos.get('id_region')|string == region.id_region|string %}selected{% endif %}>{{ region.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="lugar">Lugar <span class="obligatorio">*</span></label>
+        <input id="lugar" name="lugar" type="text" maxlength="180" required
+               value="{{ datos.get('lugar') or '' }}"
+               placeholder="Ej.: Antigua Grecia">
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Fechas y duración</legend>
+      <p class="ayuda-campo ayuda-campo--bloque">
+        MySQL no admite fechas anteriores al año 1000. Para conflictos antiguos,
+        deja las fechas vacías y usa únicamente los años (en negativo si son a.C.).
+      </p>
+
+      <div class="formulario__dos">
+        <div class="campo">
+          <label for="anio_inicio">Año de inicio <span class="obligatorio">*</span></label>
+          <input id="anio_inicio" name="anio_inicio" type="number" required min="-10000" max="9999" step="1"
+                 value="{{ datos.get('anio_inicio') if datos.get('anio_inicio') is not none else '' }}"
+                 placeholder="Ej.: 1914">
+        </div>
+        <div class="campo">
+          <label for="anio_fin">Año de fin</label>
+          <input id="anio_fin" name="anio_fin" type="number" min="-10000" max="9999" step="1"
+                 value="{{ datos.get('anio_fin') if datos.get('anio_fin') is not none else '' }}"
+                 placeholder="Vacío si continúa abierta">
+        </div>
+      </div>
+
+      <div class="formulario__dos">
+        <div class="campo">
+          <label for="fecha_inicio">Fecha exacta de inicio</label>
+          <input id="fecha_inicio" name="fecha_inicio" type="date" min="1000-01-01"
+                 value="{{ datos.get('fecha_inicio')|fecha_iso }}">
+        </div>
+        <div class="campo">
+          <label for="fecha_fin">Fecha exacta de fin</label>
+          <input id="fecha_fin" name="fecha_fin" type="date" min="1000-01-01"
+                 value="{{ datos.get('fecha_fin')|fecha_iso }}">
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Resultado y balance</legend>
+
+      <div class="campo">
+        <label for="resultado">Resultado</label>
+        <input id="resultado" name="resultado" type="text" maxlength="220"
+               value="{{ datos.get('resultado') or '' }}"
+               placeholder="Ej.: Victoria aliada; firma del armisticio">
+      </div>
+
+      <div class="campo campo--medio">
+        <label for="bajas_totales">Bajas totales estimadas</label>
+        <input id="bajas_totales" name="bajas_totales" type="number" min="0" max="4294967295" step="1"
+               value="{{ datos.get('bajas_totales') if datos.get('bajas_totales') is not none else '' }}"
+               placeholder="Ej.: 15000000">
+        <p class="ayuda-campo">Cifra aproximada; puede quedar vacía si no se conoce.</p>
+      </div>
+
+      <div class="campo">
+        <label for="descripcion">Descripción histórica</label>
+        <textarea id="descripcion" name="descripcion" rows="10"
+                  placeholder="Contexto, causas, desarrollo y consecuencias del conflicto…">{{ datos.get('descripcion') or '' }}</textarea>
+      </div>
+    </fieldset>
+
+    <div class="formulario__acciones">
+      <button class="boton boton--primario" type="submit">
+        {{ 'Guardar cambios' if modo == 'editar' else 'Añadir al catálogo' }}
+      </button>
+      <a class="boton boton--secundario" href="{{ url_for('guerra', id_guerra=guerra.id_guerra) if modo == 'editar' else url_for('guerras') }}">Cancelar</a>
+    </div>
+  </form>
+
+  <aside class="formulario-ayuda">
+    <h2>Cómo completar la ficha</h2>
+    <dl>
+      <dt>Años</dt>
+      <dd>Usa números enteros. Para el 499 a.C. escribe <code>-499</code>. El siglo se calcula automáticamente.</dd>
+      <dt>Fechas exactas</dt>
+      <dd>Solo para conflictos posteriores al año 1000. Si no se conocen, déjalas en blanco.</dd>
+      <dt>Tipo y región</dt>
+      <dd>Determinan las categorías y los reportes estadísticos del catálogo.</dd>
+      <dt>Bajas</dt>
+      <dd>Se suman a los totales del catálogo y alimentan el ranking de conflictos más letales.</dd>
+      <dt>Descripción</dt>
+      <dd>Aparece en el artículo como «Contexto histórico». Puedes usar varios párrafos.</dd>
+    </dl>
+    {% if modo == 'editar' %}
+    <p class="nota">
+      Los bandos, batallas y tratados se gestionan directamente en la base de datos.
+      Este formulario edita los datos principales de la guerra.
+    </p>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

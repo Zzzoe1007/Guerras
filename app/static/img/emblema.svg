@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 300" role="img" aria-label="Emblema del catálogo de guerras">
+  <defs>
+    <linearGradient id="fondo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fbfaf6"/>
+      <stop offset="1" stop-color="#efece3"/>
+    </linearGradient>
+    <linearGradient id="globo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5b86c4"/>
+      <stop offset="1" stop-color="#24486f"/>
+    </linearGradient>
+    <linearGradient id="acero" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#e9eef4"/>
+      <stop offset="0.45" stop-color="#aebac8"/>
+      <stop offset="0.55" stop-color="#f4f7fa"/>
+      <stop offset="1" stop-color="#8b99a9"/>
+    </linearGradient>
+    <linearGradient id="oro" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e6c874"/>
+      <stop offset="1" stop-color="#a8730a"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="0.5" cy="0.45" r="0.6">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect x="1" y="1" width="558" height="298" rx="4" fill="url(#fondo)" stroke="#c8ccd1" stroke-width="1.5"/>
+  <rect x="12" y="12" width="536" height="276" rx="2" fill="none" stroke="#d9d4c6" stroke-width="1"/>
+  <ellipse cx="280" cy="150" rx="250" ry="125" fill="url(#halo)"/>
+
+  <!-- Retícula cartográfica de fondo -->
+  <g fill="none" stroke="#cfd8e4" stroke-width="0.7" opacity="0.65">
+    <path d="M36 84h488M36 150h488M36 216h488"/>
+    <path d="M120 44v212M200 36v228M280 32v236M360 36v228M440 44v212"/>
+  </g>
+
+  <!-- Rosa de los vientos -->
+  <g transform="translate(492 62)" fill="none" stroke="#b6a16a" stroke-width="1">
+    <circle r="20" opacity="0.65"/>
+    <circle r="12" opacity="0.45"/>
+    <path d="M0-25L4-4 25 0 4 4 0 25-4 4-25 0-4-4z" fill="#d8c28b" stroke="none" opacity="0.75"/>
+  </g>
+
+  <!-- Globo terráqueo -->
+  <circle cx="280" cy="150" r="96" fill="url(#globo)" stroke="#17365f" stroke-width="2.5"/>
+  <g fill="none" stroke="#dce8f7" stroke-width="1" opacity="0.7">
+    <circle cx="280" cy="150" r="96"/>
+    <ellipse cx="280" cy="150" rx="38" ry="96"/>
+    <ellipse cx="280" cy="150" rx="70" ry="96"/>
+    <ellipse cx="280" cy="150" rx="96" ry="30"/>
+    <ellipse cx="280" cy="150" rx="96" ry="62"/>
+    <path d="M184 150h192M196 108h168M196 192h168"/>
+  </g>
+  <g fill="#8fb3d9" opacity="0.55">
+    <path d="M215 92c14-12 34-16 50-9 9 4 8 14 20 16 15 3 25-6 36-1 12 5 3 18-8 20-18 4-29-3-44 2-14 4-17 17-31 16-16-1-25-9-31-20-4-8 2-18 8-24z"/>
+    <path d="M230 168c12-9 27-8 39 0 9 6 4 18 14 24 12 7 27 5 35 15 7 9-4 20-17 18-17-2-26-12-41-15-16-3-32-3-40-15-6-10 2-21 10-27z"/>
+    <path d="M328 196c10-5 22-2 28 7 5 8-2 18-12 19-12 1-22-7-22-16 0-4 2-8 6-10z"/>
+  </g>
+
+  <!-- Espadas cruzadas -->
+  <g transform="translate(280 150) rotate(-38)">
+    <path d="M0-132L7-112 7 12 0 26-7 12-7-112z" fill="url(#acero)" stroke="#6f7d8c" stroke-width="1.2"/>
+    <path d="M0-132L3-112 0-108-3-112z" fill="#f7f9fb" opacity="0.9"/>
+    <rect x="-30" y="12" width="60" height="8" rx="4" fill="url(#oro)" stroke="#7a5306" stroke-width="1"/>
+    <rect x="-6" y="20" width="12" height="34" rx="3" fill="#6f4a12" stroke="#4d330a" stroke-width="1"/>
+    <circle cx="0" cy="59" r="8" fill="url(#oro)" stroke="#7a5306" stroke-width="1"/>
+  </g>
+  <g transform="translate(280 150) rotate(38)">
+    <path d="M0-132L7-112 7 12 0 26-7 12-7-112z" fill="url(#acero)" stroke="#6f7d8c" stroke-width="1.2"/>
+    <path d="M0-132L3-112 0-108-3-112z" fill="#f7f9fb" opacity="0.9"/>
+    <rect x="-30" y="12" width="60" height="8" rx="4" fill="url(#oro)" stroke="#7a5306" stroke-width="1"/>
+    <rect x="-6" y="20" width="12" height="34" rx="3" fill="#6f4a12" stroke="#4d330a" stroke-width="1"/>
+    <circle cx="0" cy="59" r="8" fill="url(#oro)" stroke="#7a5306" stroke-width="1"/>
+  </g>
+
+  <!-- Corona de laurel -->
+  <g fill="#7d8f6a" opacity="0.9">
+    <g transform="translate(280 150)">
+      <ellipse cx="-112" cy="62" rx="7" ry="17" transform="rotate(35 -112 62)"/>
+      <ellipse cx="-126" cy="42" rx="7" ry="17" transform="rotate(22 -126 42)"/>
+      <ellipse cx="-136" cy="18" rx="7" ry="17" transform="rotate(8 -136 18)"/>
+      <ellipse cx="-140" cy="-8" rx="7" ry="17" transform="rotate(-6 -140 -8)"/>
+      <ellipse cx="-137" cy="-34" rx="7" ry="17" transform="rotate(-20 -137 -34)"/>
+      <ellipse cx="-127" cy="-58" rx="7" ry="17" transform="rotate(-34 -127 -58)"/>
+      <ellipse cx="112" cy="62" rx="7" ry="17" transform="rotate(-35 112 62)"/>
+      <ellipse cx="126" cy="42" rx="7" ry="17" transform="rotate(-22 126 42)"/>
+      <ellipse cx="136" cy="18" rx="7" ry="17" transform="rotate(-8 136 18)"/>
+      <ellipse cx="140" cy="-8" rx="7" ry="17" transform="rotate(6 140 -8)"/>
+      <ellipse cx="137" cy="-34" rx="7" ry="17" transform="rotate(20 137 -34)"/>
+      <ellipse cx="127" cy="-58" rx="7" ry="17" transform="rotate(34 127 -58)"/>
+    </g>
+  </g>
+
+  <!-- Cinta inferior -->
+  <g transform="translate(0 0)">
+    <path d="M168 254q112-14 224 0v26q-112-14-224 0z" fill="url(#oro)" stroke="#7a5306" stroke-width="1"/>
+    <text x="280" y="273" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif"
+          font-size="13" letter-spacing="6" fill="#3a2a0a">BELLUM</text>
+  </g>
+</svg>

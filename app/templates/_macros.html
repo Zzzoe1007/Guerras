@@ -1,0 +1,74 @@
+{# Macros compartidos por las plantillas del catálogo. #}
+
+{% macro tabla_guerras(filas, mostrar_region=true) %}
+<div class="tabla-scroll">
+  <table class="wikitable tabla-guerras">
+    <thead>
+      <tr>
+        <th scope="col">Guerra</th>
+        <th scope="col">Periodo</th>
+        <th scope="col">Siglo</th>
+        {% if mostrar_region %}<th scope="col">Región</th>{% endif %}
+        <th scope="col">Tipo</th>
+        <th scope="col" class="num">Bajas</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for g in filas %}
+      <tr>
+        <td><a href="{{ url_for('guerra', id_guerra=g.id_guerra) }}">{{ g.nombre }}</a></td>
+        <td class="nowrap">{{ g.anio_inicio|rango_anios(g.anio_fin) }}</td>
+        <td>{{ g.siglo }}</td>
+        {% if mostrar_region %}<td>{{ g.region }}</td>{% endif %}
+        <td><span class="etiqueta etiqueta--tipo">{{ g.tipo }}</span></td>
+        <td class="num">{{ g.bajas_totales|numero }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endmacro %}
+
+{% macro infobox(guerra, total_bajas=none) %}
+<aside class="infobox" aria-label="Ficha de datos de {{ guerra.nombre }}">
+  <div class="infobox__cabecera">{{ guerra.nombre }}</div>
+  <div class="infobox__imagen">
+    <img src="{{ url_for('static', filename='img/emblema.svg') }}" alt="Emblema genérico del conflicto" width="280" height="150">
+    <span class="infobox__pie">{{ guerra.tipo }} · {{ guerra.region }}</span>
+  </div>
+  <table class="infobox__tabla">
+    <caption>Datos clave</caption>
+    <tbody>
+      <tr><th scope="row">Tipo</th><td>{{ guerra.tipo }}</td></tr>
+      <tr><th scope="row">Región</th><td>{{ guerra.region }}{% if guerra.continente and guerra.continente != guerra.region %} <span class="suave">({{ guerra.continente }})</span>{% endif %}</td></tr>
+      <tr><th scope="row">Lugar</th><td>{{ guerra.lugar }}</td></tr>
+      <tr><th scope="row">Inicio</th><td>{{ guerra.anio_inicio|anio }}{% if guerra.fecha_inicio %} <span class="suave">({{ guerra.fecha_inicio|fecha_larga }})</span>{% endif %}</td></tr>
+      <tr><th scope="row">Fin</th><td>{% if guerra.anio_fin %}{{ guerra.anio_fin|anio }}{% if guerra.fecha_fin %} <span class="suave">({{ guerra.fecha_fin|fecha_larga }})</span>{% endif %}{% else %}En curso{% endif %}</td></tr>
+      <tr><th scope="row">Duración</th><td>{{ guerra.anio_inicio|duracion(guerra.anio_fin) }}</td></tr>
+      <tr><th scope="row">Siglo</th><td>{{ guerra.siglo }}</td></tr>
+      <tr><th scope="row">Bajas registradas</th><td>{{ (total_bajas if total_bajas is not none else guerra.bajas_totales)|numero }}</td></tr>
+      <tr><th scope="row">Resultado</th><td>{{ guerra.resultado or '—' }}</td></tr>
+      <tr><th scope="row">Países participantes</th><td>{{ guerra.num_paises }}</td></tr>
+      <tr><th scope="row">Batallas</th><td>{{ guerra.num_batallas }}</td></tr>
+      <tr><th scope="row">Tratados</th><td>{{ guerra.num_tratados }}</td></tr>
+    </tbody>
+  </table>
+</aside>
+{% endmacro %}
+
+{% macro pestanas_articulo(guerra) %}
+<nav class="pestanas" aria-label="Acciones del artículo">
+  <a class="pestana pestana--activa" href="{{ url_for('guerra', id_guerra=guerra.id_guerra) }}">Leer</a>
+  <a class="pestana" href="{{ url_for('editar', id_guerra=guerra.id_guerra) }}">Editar</a>
+  <a class="pestana" href="{{ url_for('reportes') }}#ranking">Estadísticas</a>
+  <a class="pestana pestana--peligro" href="{{ url_for('eliminar', id_guerra=guerra.id_guerra) }}">Eliminar</a>
+  <a class="pestana pestana--derecha" href="{{ url_for('aleatoria') }}" title="Artículo aleatorio">Aleatoria ⤮</a>
+</nav>
+{% endmacro %}
+
+{% macro estado_vacio(mensaje) %}
+<div class="estado-vacio">
+  <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="" width="46" height="46">
+  <p>{{ mensaje }}</p>
+</div>
+{% endmacro %}

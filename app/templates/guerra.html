@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+{% from "_macros.html" import infobox, pestanas_articulo %}
+
+{% block titulo %}{{ guerra.nombre }} · Bellum{% endblock %}
+{% block descripcion %}{{ (guerra.descripcion or (guerra.nombre ~ ': ' ~ guerra.tipo ~ ' en ' ~ guerra.region))|truncate(160, true, '…') }}{% endblock %}
+{% block pestanas %}{{ pestanas_articulo(guerra) }}{% endblock %}
+
+{% block contenido %}
+<article class="articulo">
+  <header class="articulo__cabecera">
+    <h1>{{ guerra.nombre }}</h1>
+    <p class="articulo__origen">De Bellum, la enciclopedia histórica libre</p>
+  </header>
+
+  {{ infobox(guerra, total_bajas) }}
+
+  <p class="entradilla">
+    <strong>{{ guerra.nombre }}</strong> fue un conflicto armado de tipo
+    <a href="{{ url_for('guerras', tipo=guerra.id_tipo) }}">{{ guerra.tipo|lower }}</a>
+    que se desarrolló en {{ guerra.lugar }}
+    (<a href="{{ url_for('guerras', region=guerra.id_region) }}">{{ guerra.region }}</a>{% if guerra.continente and guerra.continente != guerra.region %}, {{ guerra.continente }}{% endif %}).
+    {% if guerra.anio_fin %}
+      Tuvo lugar entre {{ guerra.anio_inicio|anio }} y {{ guerra.anio_fin|anio }},
+      a lo largo del siglo {{ guerra.siglo }}.
+    {% else %}
+      Comenzó en {{ guerra.anio_inicio|anio }} y continúa abierto en la actualidad.
+    {% endif %}
+    {% if guerra.resultado %}
+      El resultado registrado es el siguiente: {{ guerra.resultado }}.
+    {% endif %}
+  </p>
+
+  <nav class="indice" id="indice" aria-label="Índice del artículo">
+    <div class="indice__titulo">Contenido</div>
+    <ol>
+      <li><a href="#contexto">1 Contexto histórico</a></li>
+      <li><a href="#bandos">2 Bandos y participantes</a></li>
+      <li><a href="#batallas">3 Batallas</a></li>
+      <li><a href="#tratados">4 Tratados y consecuencias</a></li>
+      <li><a href="#cronologia">5 Cronología</a></li>
+      <li><a href="#categorias">6 Categorías</a></li>
+    </ol>
+  </nav>
+
+  <section id="contexto">
+    <h2>Contexto histórico</h2>
+    {% if guerra.descripcion %}
+      <div class="texto-articulo">{{ guerra.descripcion }}</div>
+    {% else %}
+      <div class="aviso-articulo">
+        <strong>Este artículo necesita ampliación.</strong>
+        Todavía no se ha registrado una descripción histórica del conflicto.
+        Puedes <a href="{{ url_for('editar', id_guerra=guerra.id_guerra) }}">editarlo</a>
+        para añadir contexto.
+      </div>
+    {% endif %}
+    <dl class="datos-resumen">
+      <div><dt>Inicio</dt><dd>{{ guerra.anio_inicio|anio }}{% if guerra.fecha_inicio %} · {{ guerra.fecha_inicio|fecha_larga }}{% endif %}</dd></div>
+      <div><dt>Fin</dt><dd>{% if guerra.anio_fin %}{{ guerra.anio_fin|anio }}{% if guerra.fecha_fin %} · {{ guerra.fecha_fin|fecha_larga }}{% endif %}{% else %}En curso{% endif %}</dd></div>
+      <div><dt>Duración</dt><dd>{{ guerra.anio_inicio|duracion(guerra.anio_fin) }}</dd></div>
+      <div><dt>Siglo</dt><dd>{{ guerra.siglo }}</dd></div>
+      <div><dt>Tropas movilizadas</dt><dd>{{ total_tropas|numero }}</dd></div>
+      <div><dt>Bajas registradas</dt><dd>{{ total_bajas|numero }}</dd></div>
+    </dl>
+  </section>
+
+  <section id="bandos">
+    <h2>Bandos y participantes</h2>
+    {% if bandos %}
+      <div class="rejilla-bandos">
+        {% for bando in bandos %}
+        <div class="tarjeta-bando">
+          <h3>{{ bando.nombre }}</h3>
+          {% if bando.resultado %}
+            <span class="etiqueta etiqueta--{{ 'victoria' if 'victoria' in bando.resultado|lower else ('derrota' if 'derrota' in bando.resultado|lower else 'neutra') }}">{{ bando.resultado }}</span>
+          {% endif %}
+          <p class="tarjeta-bando__meta">{{ bando.num_paises }} {{ bando.num_paises|plural('país participante', 'países participantes') }}</p>
+          {% if bando.descripcion %}<p class="tarjeta-bando__desc">{{ bando.descripcion|truncate(180, true, '…') }}</p>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+
+      {% for nombre_bando, filas in participaciones|groupby('bando') %}
+        <h3 class="subtitulo">{{ nombre_bando }}</h3>
+        <div class="tabla-scroll">
+          <table class="wikitable">
+            <thead>
+              <tr>
+                <th scope="col">País o entidad</th>
+                <th scope="col" class="num">Tropas</th>
+                <th scope="col" class="num">Bajas</th>
+                <th scope="col">Resultado del bando</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for fila in filas %}
+              <tr>
+                <td><a href="{{ url_for('pais', id_pais=fila.id_pais) }}">{{ fila.pais }}</a></td>
+                <td class="num">{{ fila.tropas|numero }}</td>
+                <td class="num">{{ fila.bajas|numero }}</td>
+                <td>{{ fila.resultado_bando or '—' }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="aviso-articulo">
+        No se han registrado bandos para esta guerra. Puedes añadirlos desde
+        la base de datos o completar el artículo.
+      </div>
+    {% endif %}
+  </section>
+
+  <section id="batallas">
+    <h2>Batallas</h2>
+    {% if batallas %}
+      <div class="tabla-scroll">
+        <table class="wikitable">
+          <thead>
+            <tr>
+              <th scope="col">Batalla</th>
+              <th scope="col">Año</th>
+              <th scope="col">Lugar</th>
+              <th scope="col">Resultado</th>
+              <th scope="col">Descripción</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for batalla in batallas %}
+            <tr>
+              <td><strong>{{ batalla.nombre }}</strong>{% if batalla.fecha %}<br><small class="suave">{{ batalla.fecha|fecha_larga }}</small>{% endif %}</td>
+              <td class="nowrap">{{ batalla.anio|anio }}</td>
+              <td>{{ batalla.lugar }}</td>
+              <td>{{ batalla.resultado or '—' }}</td>
+              <td>{{ batalla.descripcion or '—' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="aviso-articulo">
+        <strong>Sin batallas documentadas.</strong>
+        Este conflicto aparece en el catálogo sin enfrentamientos concretos
+        registrados.
+      </div>
+    {% endif %}
+  </section>
+
+  <section id="tratados">
+    <h2>Tratados y consecuencias</h2>
+    {% if tratados %}
+      <div class="tabla-scroll">
+        <table class="wikitable">
+          <thead>
+            <tr><th scope="col">Tratado</th><th scope="col">Año</th><th scope="col">Lugar</th><th scope="col">Descripción</th></tr>
+          </thead>
+          <tbody>
+            {% for tratado in tratados %}
+            <tr>
+              <td><strong>{{ tratado.nombre }}</strong></td>
+              <td class="nowrap">{{ tratado.anio|anio }}</td>
+              <td>{{ tratado.lugar }}</td>
+              <td>{{ tratado.descripcion or '—' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="nota">No consta ningún tratado asociado a este conflicto en el catálogo.</p>
+    {% endif %}
+  </section>
+
+  <section id="cronologia">
+    <h2>Cronología</h2>
+    {% if cronologia %}
+      <ol class="cronologia">
+        {% for hito in cronologia %}
+        <li>
+          <span class="cronologia__anio">{{ hito.anio|anio }}</span>
+          <span class="cronologia__tipo">{{ hito.tipo }}</span>
+          <span class="cronologia__titulo">{{ hito.titulo }}</span>
+          {% if hito.lugar %}<span class="cronologia__lugar">{{ hito.lugar }}</span>{% endif %}
+          {% if hito.detalle %}<span class="cronologia__detalle">{{ hito.detalle }}</span>{% endif %}
+        </li>
+        {% endfor %}
+      </ol>
+    {% else %}
+      <p class="nota">No hay hitos cronológicos registrados para este conflicto.</p>
+    {% endif %}
+  </section>
+
+  <section id="categorias" class="categorias">
+    <h2>Categorías</h2>
+    <ul class="lista-categorias">
+      <li><a href="{{ url_for('guerras', siglo=guerra.siglo) }}">Guerras del siglo {{ guerra.siglo }}</a></li>
+      <li><a href="{{ url_for('guerras', region=guerra.id_region) }}">Guerras de {{ guerra.region }}</a></li>
+      <li><a href="{{ url_for('guerras', tipo=guerra.id_tipo) }}">{{ guerra.tipo }}</a></li>
+      {% if not guerra.anio_fin %}
+      <li><a href="{{ url_for('guerras', curso=1) }}">Conflictos en curso</a></li>
+      {% endif %}
+      {% for fila in participaciones|unique(attribute='pais') %}
+        <li><a href="{{ url_for('pais', id_pais=fila.id_pais) }}">Guerras con {{ fila.pais }}</a></li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <nav class="navegacion-articulo" aria-label="Artículos relacionados">
+    {% if vecinas.anterior %}
+      <a class="navegacion-articulo__enlace navegacion-articulo__enlace--anterior" href="{{ url_for('guerra', id_guerra=vecinas.anterior.id_guerra) }}">
+        <span class="navegacion-articulo__etiqueta">← Anterior</span>
+        <span class="navegacion-articulo__titulo">{{ vecinas.anterior.nombre }}</span>
+        <span class="navegacion-articulo__fecha">{{ vecinas.anterior.anio_inicio|rango_anios(vecinas.anterior.anio_fin) }}</span>
+      </a>
+    {% else %}<span></span>{% endif %}
+    {% if vecinas.siguiente %}
+      <a class="navegacion-articulo__enlace navegacion-articulo__enlace--siguiente" href="{{ url_for('guerra', id_guerra=vecinas.siguiente.id_guerra) }}">
+        <span class="navegacion-articulo__etiqueta">Siguiente →</span>
+        <span class="navegacion-articulo__titulo">{{ vecinas.siguiente.nombre }}</span>
+        <span class="navegacion-articulo__fecha">{{ vecinas.siguiente.anio_inicio|rango_anios(vecinas.siguiente.anio_fin) }}</span>
+      </a>
+    {% endif %}
+  </nav>
+
+  <footer class="articulo__pie">
+    <p>Esta entrada del catálogo se basa en datos históricos registrados en la base de datos del proyecto.
+       Última revisión: {{ anio_actual }}.</p>
+  </footer>
+</article>
+{% endblock %}

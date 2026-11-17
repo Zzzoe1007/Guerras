@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% from "_macros.html" import tabla_guerras, estado_vacio %}
+
+{% block titulo %}{% if consulta %}«{{ consulta }}» · Búsqueda{% else %}Búsqueda{% endif %} · Bellum{% endblock %}
+{% block descripcion %}Busca guerras, países, batallas y tratados en el catálogo histórico.{% endblock %}
+
+{% block pestanas %}
+<nav class="pestanas" aria-label="Búsqueda">
+  <a class="pestana pestana--activa" href="{{ url_for('buscar') }}">Búsqueda</a>
+  <a class="pestana" href="{{ url_for('guerras') }}">Índice de guerras</a>
+  <a class="pestana" href="{{ url_for('reportes') }}">Reportes</a>
+  <a class="pestana pestana--derecha" href="{{ url_for('aleatoria') }}">Aleatoria ⤮</a>
+</nav>
+{% endblock %}
+
+{% block contenido %}
+<header class="cabecera-articulo">
+  <h1>Resultados de búsqueda</h1>
+  {% if consulta %}
+    <p class="cabecera-articulo__sub">
+      {{ total }} {{ total|plural('coincidencia', 'coincidencias') }} para
+      <strong>«{{ consulta }}»</strong> en el catálogo.
+    </p>
+  {% else %}
+    <p class="cabecera-articulo__sub">Escribe un término para buscar en todo el catálogo.</p>
+  {% endif %}
+</header>
+
+<form class="buscador-articulo" action="{{ url_for('buscar') }}" method="get" role="search">
+  <label class="solo-lectores" for="q-buscar">Término de búsqueda</label>
+  <input id="q-buscar" type="search" name="q" value="{{ consulta }}" placeholder="Guerra, país, batalla, tratado…" autofocus>
+  <button class="boton boton--primario" type="submit">Buscar</button>
+</form>
+
+{% if not consulta %}
+  <div class="estado-vacio">
+    <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="" width="52" height="52">
+    <p>La búsqueda recorre nombres, lugares, resultados, descripciones, bandos, batallas y tratados.</p>
+    <p class="nota">También puedes <a href="{{ url_for('guerras') }}">explorar el índice completo</a>.</p>
+  </div>
+{% elif total == 0 %}
+  <div class="estado-vacio">
+    <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="" width="52" height="52">
+    <p>No se encontraron resultados para <strong>«{{ consulta }}»</strong>.</p>
+    <p class="nota">Prueba con un término más general, revisa la ortografía o consulta el
+      <a href="{{ url_for('guerras') }}">índice de guerras</a>.</p>
+  </div>
+{% else %}
+  {% if guerras %}
+  <section class="bloque">
+    <h2 class="titulo-seccion"><span class="titulo-seccion__filete"></span>Guerras ({{ guerras|length }})</h2>
+    {{ tabla_guerras(guerras) }}
+  </section>
+  {% endif %}
+
+  <div class="dos-columnas dos-columnas--amplias">
+    {% if paises %}
+    <section class="bloque">
+      <h2 class="titulo-seccion"><span class="titulo-seccion__filete"></span>Países ({{ paises|length }})</h2>
+      <ul class="lista-enlaces">
+        {% for pais in paises %}
+        <li>
+          <a href="{{ url_for('pais', id_pais=pais.id_pais) }}">{{ pais.nombre }}</a>
+          <span class="suave">· {{ pais.continente }}{% if not pais.vigente %} · entidad histórica{% endif %}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    {% if bandos %}
+    <section class="bloque">
+      <h2 class="titulo-seccion"><span class="titulo-seccion__filete"></span>Bandos ({{ bandos|length }})</h2>
+      <ul class="lista-resultados">
+        {% for bando in bandos %}
+        <li>
+          <a href="{{ url_for('guerra', id_guerra=bando.id_guerra) }}">{{ bando.guerra }}</a>
+          <span class="suave">— {{ bando.bando }}{% if bando.resultado_bando %} ({{ bando.resultado_bando }}){% endif %}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+  </div>
+
+  {% if batallas %}
+  <section class="bloque">
+    <h2 class="titulo-seccion"><span class="titulo-seccion__filete"></span>Batallas ({{ batallas|length }})</h2>
+    <div class="tabla-scroll">
+      <table class="wikitable">
+        <thead><tr><th>Batalla</th><th>Año</th><th>Lugar</th><th>Resultado</th><th>Guerra</th></tr></thead>
+        <tbody>
+          {% for batalla in batallas %}
+          <tr>
+            <td>{{ batalla.nombre }}</td>
+            <td class="nowrap">{{ batalla.anio|anio }}</td>
+            <td>{{ batalla.lugar }}</td>
+            <td>{{ batalla.resultado or '—' }}</td>
+            <td><a href="{{ url_for('guerra', id_guerra=batalla.id_guerra) }}">{{ batalla.guerra }}</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+
+  {% if tratados %}
+  <section class="bloque">
+    <h2 class="titulo-seccion"><span class="titulo-seccion__filete"></span>Tratados ({{ tratados|length }})</h2>
+    <ul class="lista-resultados">
+      {% for tratado in tratados %}
+      <li>
+        <strong>{{ tratado.nombre }}</strong>
+        <span class="suave">({{ tratado.anio|anio }}, {{ tratado.lugar }})</span> —
+        <a href="{{ url_for('guerra', id_guerra=tratado.id_guerra) }}">{{ tratado.guerra }}</a>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+{% endif %}
+{% endblock %}

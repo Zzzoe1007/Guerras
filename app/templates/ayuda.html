@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block titulo %}Ayuda · Bellum{% endblock %}
+{% block descripcion %}Guía de uso del catálogo de guerras: navegación, búsqueda, CRUD, reportes y solución de problemas.{% endblock %}
+
+{% block pestanas %}
+<nav class="pestanas" aria-label="Ayuda">
+  <a class="pestana" href="{{ url_for('portada') }}">Portada</a>
+  <a class="pestana" href="{{ url_for('guerras') }}">Índice</a>
+  <a class="pestana" href="{{ url_for('reportes') }}">Reportes</a>
+  <a class="pestana pestana--activa" href="{{ url_for('ayuda') }}">Ayuda</a>
+</nav>
+{% endblock %}
+
+{% block contenido %}
+<header class="cabecera-articulo">
+  <h1>Ayuda: cómo usar el catálogo</h1>
+  <p class="cabecera-articulo__sub">Guía rápida de navegación, edición y reportes.</p>
+</header>
+
+<nav class="indice" id="indice" aria-label="Índice de la ayuda">
+  <div class="indice__titulo">Contenido</div>
+  <ol>
+    <li><a href="#navegar">1 Navegar por el catálogo</a></li>
+    <li><a href="#buscar">2 Buscar información</a></li>
+    <li><a href="#editar">3 Crear, editar y eliminar</a></li>
+    <li><a href="#reportes">4 Reportes y estadísticas</a></li>
+    <li><a href="#fechas">5 Años a.C. y fechas</a></li>
+    <li><a href="#instalacion">6 Puesta en marcha</a></li>
+    <li><a href="#problemas">7 Solución de problemas</a></li>
+    <li><a href="#tecnologia">8 Tecnologías del proyecto</a></li>
+  </ol>
+</nav>
+
+<section id="navegar">
+  <h2>1. Navegar por el catálogo</h2>
+  <p>
+    La <a href="{{ url_for('portada') }}">portada</a> reúne un artículo destacado,
+    las cifras generales del catálogo y accesos rápidos a los conflictos más
+    letales y a la cronología por siglos. Desde la barra lateral puedes ir al
+    <a href="{{ url_for('guerras') }}">índice completo</a>, a un
+    <a href="{{ url_for('aleatoria') }}">artículo aleatorio</a> o a los reportes.
+  </p>
+  <p>
+    Cada guerra tiene su propio artículo con una ficha de datos, el contexto
+    histórico, los bandos y países participantes, las batallas, los tratados y
+    una cronología. Los enlaces de países abren la lista de conflictos en los
+    que participaron.
+  </p>
+</section>
+
+<section id="buscar">
+  <h2>2. Buscar información</h2>
+  <p>
+    El buscador superior recorre de forma simultánea:
+  </p>
+  <ul>
+    <li>nombres, lugares, resultados y descripciones de las guerras;</li>
+    <li>nombres de países y entidades históricas;</li>
+    <li>bandos y sus resultados;</li>
+    <li>batallas (nombre, lugar y resultado);</li>
+    <li>tratados (nombre y lugar).</li>
+  </ul>
+  <p>
+    El <a href="{{ url_for('guerras') }}">índice de guerras</a> permite además
+    combinar filtros por siglo, región, tipo, rango de años y conflictos en
+    curso, y ordenar por cronología, nombre, letalidad o duración.
+  </p>
+</section>
+
+<section id="editar">
+  <h2>3. Crear, editar y eliminar</h2>
+  <h3>Crear una guerra</h3>
+  <p>
+    Usa <a href="{{ url_for('nueva') }}">Crear una guerra</a>. Los campos
+    obligatorios son el nombre, el tipo, la región, el lugar y el año de inicio.
+    El siglo se calcula automáticamente a partir del año.
+  </p>
+  <h3>Editar</h3>
+  <p>
+    En cada artículo, la pestaña <strong>Editar</strong> abre un formulario con
+    los datos actuales. Los cambios se validan antes de guardarse en MySQL.
+  </p>
+  <h3>Eliminar</h3>
+  <p>
+    La pestaña <strong>Eliminar</strong> pide confirmación expresa. Al borrar una
+    guerra se eliminan en cascada sus bandos, participaciones, batallas y
+    tratados, según las claves foráneas del esquema.
+  </p>
+  <div class="aviso-articulo">
+    <strong>Protección de formularios.</strong>
+    Todas las operaciones de escritura usan un token CSRF asociado a la sesión,
+    de modo que no se pueden enviar formularios desde otra página.
+  </div>
+</section>
+
+<section id="reportes">
+  <h2>4. Reportes y estadísticas</h2>
+  <p>La página de <a href="{{ url_for('reportes') }}">reportes</a> incluye:</p>
+  <ul>
+    <li>resumen general del catálogo;</li>
+    <li>guerras por siglo, región y tipo, con promedios de bajas;</li>
+    <li>ranking de las guerras más letales;</li>
+    <li>conflictos de mayor duración;</li>
+    <li>países con más participaciones y con más bandos victoriosos;</li>
+    <li>top 3 de guerras más letales por región (función de ventana <code>RANK()</code>);</li>
+    <li>guerras sin batallas registradas.</li>
+  </ul>
+  <p>
+    Estas consultas se ejecutan en tiempo real sobre las vistas y tablas de
+    MySQL, e incluyen agregaciones, <code>JOIN</code>, CTE y funciones de ventana.
+  </p>
+</section>
+
+<section id="fechas">
+  <h2>5. Años a.C. y fechas</h2>
+  <p>
+    Los años anteriores a Cristo se almacenan como números negativos:
+    el 499 a.C. es <code>-499</code> y el 58 a.C. es <code>-58</code>.
+    La aplicación los muestra como «499 a.C.».
+  </p>
+  <p>
+    MySQL no admite fechas <code>DATE</code> anteriores al año 1000. Por eso,
+    para los conflictos antiguos se usan únicamente los campos de año y las
+    fechas exactas quedan vacías. En conflictos modernos puedes registrar
+    fechas completas en formato <code>AAAA-MM-DD</code>.
+  </p>
+</section>
+
+<section id="instalacion">
+  <h2>6. Puesta en marcha</h2>
+  <h3>Requisitos</h3>
+  <ul>
+    <li>Python 3.10 o superior.</li>
+    <li>MySQL 8.0+ o MariaDB 10.5+ (XAMPP, WAMP, Laragon o servidor propio).</li>
+    <li>Navegador web moderno.</li>
+  </ul>
+  <h3>Pasos</h3>
+  <ol>
+    <li>Importa <code>sql/catalogo_guerras.sql</code> desde phpMyAdmin o con la consola de MySQL.</li>
+    <li>Instala las dependencias: <code>pip install -r requirements.txt</code>.</li>
+    <li>Configura la conexión con variables de entorno si es necesario.</li>
+    <li>Arranca la web con <code>python run_web.py</code>.</li>
+    <li>Abre <code>http://127.0.0.1:5000/</code> en el navegador.</li>
+  </ol>
+  <h3>Variables de entorno</h3>
+  <div class="tabla-scroll">
+    <table class="wikitable">
+      <thead><tr><th>Variable</th><th>Valor por defecto</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>DB_HOST</code></td><td>127.0.0.1</td><td>Servidor MySQL.</td></tr>
+        <tr><td><code>DB_PORT</code></td><td>3306</td><td>Puerto del servidor.</td></tr>
+        <tr><td><code>DB_USER</code></td><td>root</td><td>Usuario de MySQL.</td></tr>
+        <tr><td><code>DB_PASSWORD</code></td><td>(vacía)</td><td>Contraseña del usuario.</td></tr>
+        <tr><td><code>DB_NAME</code></td><td>catalogo_guerras</td><td>Base de datos del proyecto.</td></tr>
+        <tr><td><code>SECRET_KEY</code></td><td>(clave de desarrollo)</td><td>Firma de la sesión y del token CSRF.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="nota">En Windows (PowerShell) puedes definir las variables con
+    <code>$env:DB_PASSWORD="1234"</code> antes de arrancar el servidor.</p>
+</section>
+
+<section id="problemas">
+  <h2>7. Solución de problemas</h2>
+  <dl class="preguntas">
+    <dt>«Sin conexión con la base de datos»</dt>
+    <dd>Comprueba que MySQL esté iniciado, que el puerto sea correcto y que
+      hayas importado <code>sql/catalogo_guerras.sql</code>. Revisa
+      <code>DB_HOST</code>, <code>DB_PORT</code>, <code>DB_USER</code>,
+      <code>DB_PASSWORD</code> y <code>DB_NAME</code>.</dd>
+    <dt>«Acceso denegado por MySQL»</dt>
+    <dd>El usuario o la contraseña no son correctos, o el usuario no tiene
+      permisos sobre la base de datos.</dd>
+    <dt>«Ya existe una guerra con ese nombre»</dt>
+    <dd>El nombre debe ser único. Añade una aclaración entre paréntesis, por
+      ejemplo «Guerra Civil (España, 1936-1939)».</dd>
+    <dt>«MySQL no admite fechas anteriores al año 1000»</dt>
+    <dd>Deja vacías las fechas exactas y usa solo los años, en negativo si son
+      anteriores a Cristo.</dd>
+    <dt>La página no carga o da error 500</dt>
+    <dd>Revisa la terminal donde ejecutas <code>python run_web.py</code>:
+      allí aparece el detalle del error. También puedes arrancar con
+      <code>--debug</code> durante el desarrollo.</dd>
+  </dl>
+</section>
+
+<section id="tecnologia">
+  <h2>8. Tecnologías del proyecto</h2>
+  <div class="rejilla-tecnologias">
+    <div class="tecnologia"><strong>MySQL / MariaDB</strong><span>8 tablas, claves primarias y foráneas, restricciones CHECK, índices y 4 vistas.</span></div>
+    <div class="tecnologia"><strong>Python</strong><span>Acceso a datos con <code>mysql-connector-python</code>, validaciones y CRUD.</span></div>
+    <div class="tecnologia"><strong>Flask</strong><span>Servidor web, rutas, plantillas Jinja2 y protección CSRF.</span></div>
+    <div class="tecnologia"><strong>HTML y CSS</strong><span>Interfaz accesible inspirada en las enciclopedias colaborativas, sin dependencias externas.</span></div>
+  </div>
+  <p class="nota">
+    La versión de consola sigue disponible con <code>python main.py</code>.
+    Ambas interfaces comparten el mismo repositorio y los mismos reportes.
+  </p>
+</section>
+{% endblock %}

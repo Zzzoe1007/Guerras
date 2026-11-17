@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Catálogo de Guerras de la Historia{% endblock %}</title>
+  <meta name="description" content="{% block descripcion %}Enciclopedia académica de las guerras de la historia: cronología, bandos, batallas, tratados y estadísticas.{% endblock %}">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/logo.svg') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+</head>
+<body>
+<a class="saltar-contenido" href="#contenido">Saltar al contenido</a>
+
+<header class="cabecera">
+  <div class="cabecera__interior">
+    <a class="marca" href="{{ url_for('portada') }}" aria-label="Bellum, portada">
+      <img class="marca__logo" src="{{ url_for('static', filename='img/logo.svg') }}" alt="" width="46" height="46">
+      <span class="marca__texto">
+        <span class="marca__nombre">Bellum</span>
+        <span class="marca__lema">Catálogo de Guerras</span>
+      </span>
+    </a>
+
+    <form class="buscador" action="{{ url_for('buscar') }}" method="get" role="search">
+      <label class="solo-lectores" for="busqueda-global">Buscar en el catálogo</label>
+      <input id="busqueda-global" type="search" name="q" value="{{ request.args.get('q', '') }}"
+             placeholder="Buscar guerras, países, batallas…" autocomplete="off">
+      <button type="submit" title="Buscar">
+        <span aria-hidden="true">⌕</span>
+        <span class="solo-lectores">Buscar</span>
+      </button>
+    </form>
+
+    <nav class="cabecera__enlaces" aria-label="Enlaces principales">
+      <a href="{{ url_for('portada') }}">Portada</a>
+      <a href="{{ url_for('guerras') }}">Guerras</a>
+      <a href="{{ url_for('reportes') }}">Reportes</a>
+      <a href="{{ url_for('ayuda') }}">Ayuda</a>
+      <button class="menu-boton" type="button" aria-controls="lateral" aria-expanded="false"
+              data-menu-boton>☰<span class="solo-lectores">Menú</span></button>
+    </nav>
+  </div>
+</header>
+
+<div class="disposicion">
+  <aside class="lateral" id="lateral">
+    <div class="lateral__caja">
+      <h2 class="lateral__titulo">Navegación</h2>
+      <ul class="lateral__lista">
+        <li><a href="{{ url_for('portada') }}">Portada</a></li>
+        <li><a href="{{ url_for('aleatoria') }}">Artículo aleatorio</a></li>
+        <li><a href="{{ url_for('guerras') }}">Todas las guerras <span class="contador">{{ nav_total }}</span></a></li>
+        <li><a href="{{ url_for('buscar') }}">Búsqueda</a></li>
+        <li><a href="{{ url_for('reportes') }}">Reportes y estadísticas</a></li>
+        <li><a href="{{ url_for('ayuda') }}">Ayuda</a></li>
+      </ul>
+    </div>
+
+    <div class="lateral__caja">
+      <h2 class="lateral__titulo">Herramientas</h2>
+      <ul class="lateral__lista">
+        <li><a href="{{ url_for('nueva') }}">Crear una guerra</a></li>
+        <li><a href="{{ url_for('guerras', curso=1) }}">Conflictos en curso</a></li>
+        <li><a href="{{ url_for('guerras', orden='bajas') }}">Más letales</a></li>
+        <li><a href="{{ url_for('guerras', orden='duracion') }}">Más largas</a></li>
+      </ul>
+    </div>
+
+    {% if nav_siglos %}
+    <div class="lateral__caja">
+      <h2 class="lateral__titulo">Guerras por siglo</h2>
+      <ul class="lateral__lista lateral__lista--compacta">
+        {% for siglo in nav_siglos %}
+        <li><a href="{{ url_for('guerras', siglo=siglo) }}">{{ siglo }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <div class="lateral__caja lateral__caja--datos">
+      <h2 class="lateral__titulo">El catálogo</h2>
+      <dl class="mini-datos">
+        <dt>Guerras</dt><dd>{{ nav_total }}</dd>
+        <dt>Países</dt><dd>{{ nav_paises }}</dd>
+        <dt>Batallas</dt><dd>{{ nav_batallas }}</dd>
+        <dt>Tratados</dt><dd>{{ nav_tratados }}</dd>
+      </dl>
+      <p class="lateral__nota">Proyecto académico de bases de datos relacionales.</p>
+    </div>
+  </aside>
+
+  <main class="contenido" id="contenido">
+    {% block pestanas %}{% endblock %}
+
+    {% with mensajes = get_flashed_messages(with_categories=true) %}
+      {% if mensajes %}
+      <div class="avisos" role="status">
+        {% for categoria, mensaje in mensajes %}
+        <div class="aviso aviso--{{ categoria }}">
+          <span class="aviso__icono" aria-hidden="true">
+            {% if categoria == 'exito' %}✓{% elif categoria == 'error' %}!{% else %}i{% endif %}
+          </span>
+          <span>{{ mensaje }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block contenido %}{% endblock %}
+  </main>
+</div>
+
+<footer class="pie">
+  <div class="pie__interior">
+    <p><strong>Bellum</strong> · Catálogo de Guerras de la Historia</p>
+    <p class="pie__meta">
+      Proyecto académico · MySQL + Python + Flask · {{ anio_actual }}
+    </p>
+    <p class="pie__enlaces">
+      <a href="{{ url_for('portada') }}">Portada</a> ·
+      <a href="{{ url_for('guerras') }}">Índice de guerras</a> ·
+      <a href="{{ url_for('reportes') }}">Reportes</a> ·
+      <a href="{{ url_for('ayuda') }}">Ayuda</a>
+    </p>
+  </div>
+</footer>
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

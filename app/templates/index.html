@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% from "_macros.html" import tabla_guerras, estado_vacio %}
+
+{% block titulo %}Portada · Catálogo de Guerras de la Historia{% endblock %}
+{% block descripcion %}Portada de la enciclopedia de guerras: artículo destacado, estadísticas, cronología por siglos y conflictos recientes.{% endblock %}
+
+{% block contenido %}
+<section class="portada-hero">
+  <p class="sobretitulo">La enciclopedia histórica libre</p>
+  <h1 class="portada-hero__titulo">Catálogo de Guerras<br>de la Historia</h1>
+  <p class="portada-hero__entradilla">
+    Un recorrido documentado por los conflictos que han transformado el mundo:
+    desde la Antigüedad hasta nuestros días, con bandos, batallas, tratados y
+    cifras contrastadas.
+  </p>
+  <form class="buscador-grande" action="{{ url_for('buscar') }}" method="get" role="search">
+    <label class="solo-lectores" for="busqueda-portada">Buscar en el catálogo</label>
+    <input id="busqueda-portada" type="search" name="q" placeholder="Busca una guerra, un país, una batalla o un tratado…" autocomplete="off">
+    <button type="submit">Buscar</button>
+  </form>
+  {% if ejemplo %}
+  <p class="atajos">
+    <span>Prueba con:</span>
+    {% for g in ejemplo %}
+      <a href="{{ url_for('guerra', id_guerra=g.id_guerra) }}">{{ g.nombre }}</a>{% if not loop.last %} · {% endif %}
+    {% endfor %}
+  </p>
+  {% endif %}
+</section>
+
+<div class="rejilla-portada">
+  <section class="destacado" aria-labelledby="titulo-destacado">
+    <h2 class="titulo-seccion" id="titulo-destacado">
+      <span class="titulo-seccion__filete"></span>Artículo destacado
+    </h2>
+    {% if destacada %}
+    {% set g = destacada.guerra %}
+    <div class="destacado__cuerpo">
+      <a class="destacado__imagen" href="{{ url_for('guerra', id_guerra=g.id_guerra) }}" aria-hidden="true" tabindex="-1">
+        <img src="{{ url_for('static', filename='img/portada.svg') }}" alt="" width="320" height="220">
+      </a>
+      <div class="destacado__texto">
+        <p class="destacado__etiqueta">{{ g.tipo }} · {{ g.siglo }}</p>
+        <h3><a href="{{ url_for('guerra', id_guerra=g.id_guerra) }}">{{ g.nombre }}</a></h3>
+        <p class="destacado__fecha">{{ g.anio_inicio|rango_anios(g.anio_fin) }} · {{ g.siglo }}</p>
+        <p>
+          {{ (g.descripcion or ('Conflicto armado registrado en ' ~ g.lugar ~ '. Consulta su ficha completa para conocer bandos, batallas y tratados.'))|truncate(330, true, '…') }}
+        </p>
+        <p class="destacado__datos">
+          <span><strong>{{ g.num_paises }}</strong> países</span>
+          <span><strong>{{ g.num_batallas }}</strong> batallas</span>
+          <span><strong>{{ g.bajas_totales|numero }}</strong> bajas</span>
+        </p>
+        <a class="boton boton--primario" href="{{ url_for('guerra', id_guerra=g.id_guerra) }}">Leer el artículo completo →</a>
+      </div>
+    </div>
+    {% else %}
+      {{ estado_vacio("Aún no hay guerras registradas. Crea la primera entrada del catálogo.") }}
+    {% endif %}
+  </section>
+
+  <aside class="cifras" aria-labelledby="titulo-cifras">
+    <h2 class="titulo-seccion" id="titulo-cifras">
+      <span class="titulo-seccion__filete"></span>El catálogo en cifras
+    </h2>
+    <div class="cifras__rejilla">
+      <div class="cifra">
+        <span class="cifra__numero">{{ resumen.total_guerras|numero }}</span>
+        <span class="cifra__texto">guerras documentadas</span>
+      </div>
+      <div class="cifra">
+        <span class="cifra__numero">{{ resumen.total_paises|numero }}</span>
+        <span class="cifra__texto">países implicados</span>
+      </div>
+      <div class="cifra">
+        <span class="cifra__numero">{{ resumen.total_batallas|numero }}</span>
+        <span class="cifra__texto">batallas registradas</span>
+      </div>
+      <div class="cifra">
+        <span class="cifra__numero">{{ resumen.total_tratados|numero }}</span>
+        <span class="cifra__texto">tratados de paz</span>
+      </div>
+      <div class="cifra cifra--ancha">
+        <span class="cifra__numero">{{ resumen.bajas_registradas|numero }}</span>
+        <span class="cifra__texto">bajas totales documentadas</span>
+      </div>
+      <div class="cifra cifra--ancha cifra--aviso">
+        <span class="cifra__numero">{{ resumen.guerras_en_curso|numero }}</span>
+        <span class="cifra__texto">conflictos aún abiertos</span>
+      </div>
+    </div>
+    <a class="enlace-flecha" href="{{ url_for('reportes') }}">Ver todos los reportes →</a>
+  </aside>
+</div>
+
+<section class="bloque" aria-labelledby="titulo-explorar">
+  <h2 class="titulo-seccion" id="titulo-explorar"><span class="titulo-seccion__filete"></span>Explorar el catálogo</h2>
+  <div class="dos-columnas">
+    <div>
+      <h3 class="subtitulo">Por tipo de conflicto</h3>
+      <ul class="rejilla-fichas">
+        {% for tipo in por_tipo %}
+        <li>
+          <a class="ficha" href="{{ url_for('guerras', tipo=tipo.id_tipo) }}">
+            <span class="ficha__inicial">{{ tipo.tipo.split(' ')[-1][:1]|upper }}</span>
+            <span class="ficha__cuerpo">
+              <strong>{{ tipo.tipo }}</strong>
+              <small>{{ tipo.total_guerras }} {{ tipo.total_guerras|plural('guerra', 'guerras') }}</small>
+            </span>
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div>
+      <h3 class="subtitulo">Por región histórica</h3>
+      <ul class="rejilla-fichas">
+        {% for region in por_region %}
+        <li>
+          <a class="ficha" href="{{ url_for('guerras', region=region.id_region) }}">
+            <span class="ficha__inicial ficha__inicial--region">◈</span>
+            <span class="ficha__cuerpo">
+              <strong>{{ region.region }}</strong>
+              <small>{{ region.continente }} · {{ region.total_guerras }} {{ region.total_guerras|plural('guerra', 'guerras') }}</small>
+            </span>
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</section>
+
+<div class="dos-columnas dos-columnas--amplias">
+  <section class="bloque" aria-labelledby="titulo-letales">
+    <h2 class="titulo-seccion" id="titulo-letales"><span class="titulo-seccion__filete"></span>Las más letales</h2>
+    <p class="nota">Ordenadas por bajas totales documentadas en el catálogo.</p>
+    <div class="tabla-scroll">
+      <table class="wikitable">
+        <thead>
+          <tr><th>#</th><th>Guerra</th><th>Siglo</th><th class="num">Bajas</th></tr>
+        </thead>
+        <tbody>
+          {% for g in letales %}
+          <tr>
+            <td class="num">{{ loop.index }}</td>
+            <td><a href="{{ url_for('guerra', id_guerra=g.id_guerra) }}">{{ g.nombre }}</a></td>
+            <td>{{ g.siglo }}</td>
+            <td class="num">{{ g.bajas_totales|numero }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <a class="enlace-flecha" href="{{ url_for('reportes') }}#ranking">Ver ranking completo →</a>
+  </section>
+
+  <section class="bloque" aria-labelledby="titulo-siglos">
+    <h2 class="titulo-seccion" id="titulo-siglos"><span class="titulo-seccion__filete"></span>Cronología por siglos</h2>
+    <p class="nota">Del mundo antiguo a la era contemporánea.</p>
+    <ul class="linea-tiempo">
+      {% for fila in por_siglo %}
+      <li>
+        <a href="{{ url_for('guerras', siglo=fila.siglo) }}">
+          <span class="linea-tiempo__siglo">{{ fila.siglo }}</span>
+          <span class="linea-tiempo__barra">
+            <span style="width: {{ (fila.total_guerras / (por_siglo|map(attribute='total_guerras')|max) * 100)|round(0, 'floor') }}%"></span>
+          </span>
+          <span class="linea-tiempo__dato">{{ fila.total_guerras }} {{ fila.total_guerras|plural('guerra', 'guerras') }}</span>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+</div>
+
+<section class="bloque" aria-labelledby="titulo-recientes">
+  <h2 class="titulo-seccion" id="titulo-recientes"><span class="titulo-seccion__filete"></span>Conflictos recientes</h2>
+  <p class="nota">Las entradas más modernas del catálogo, ordenadas de la más reciente a la más antigua.</p>
+  {% if recientes %}
+    {{ tabla_guerras(recientes) }}
+  {% else %}
+    {{ estado_vacio("No hay conflictos registrados todavía.") }}
+  {% endif %}
+</section>
+
+<section class="bloque bloque--invitacion">
+  <div>
+    <h2>¿Falta algún conflicto?</h2>
+    <p>El catálogo es colaborativo: puedes añadir nuevas guerras, completar sus datos y generar reportes estadísticos al instante.</p>
+  </div>
+  <div class="bloque__acciones">
+    <a class="boton boton--primario" href="{{ url_for('nueva') }}">Añadir una guerra</a>
+    <a class="boton boton--secundario" href="{{ url_for('ayuda') }}">Cómo usar el catálogo</a>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% from "_macros.html" import tabla_guerras, estado_vacio %}
+
+{% block titulo %}Índice de guerras · Bellum{% endblock %}
+{% block descripcion %}Índice completo de guerras del catálogo, con filtros por siglo, región, tipo y año.{% endblock %}
+
+{% block pestanas %}
+<nav class="pestanas" aria-label="Catálogo">
+  <a class="pestana pestana--activa" href="{{ url_for('guerras') }}">Índice</a>
+  <a class="pestana" href="{{ url_for('buscar') }}">Búsqueda</a>
+  <a class="pestana" href="{{ url_for('reportes') }}">Reportes</a>
+  <a class="pestana" href="{{ url_for('nueva') }}">Crear</a>
+  <a class="pestana pestana--derecha" href="{{ url_for('aleatoria') }}">Aleatoria ⤮</a>
+</nav>
+{% endblock %}
+
+{% block contenido %}
+<header class="cabecera-articulo">
+  <h1>Índice de guerras</h1>
+  <p class="cabecera-articulo__sub">
+    {{ guerras|length }} {{ guerras|length|plural('conflicto encontrado', 'conflictos encontrados') }}
+    en el catálogo.
+  </p>
+</header>
+
+<form class="panel-filtros" method="get" action="{{ url_for('guerras') }}">
+  <div class="panel-filtros__fila">
+    <div class="campo campo--ancho">
+      <label for="f-q">Buscar</label>
+      <input id="f-q" type="search" name="q" value="{{ filtros.q }}" placeholder="Nombre, lugar, descripción…">
+    </div>
+    <div class="campo">
+      <label for="f-siglo">Siglo</label>
+      <select id="f-siglo" name="siglo">
+        <option value="">Todos</option>
+        {% for siglo in siglos %}
+        <option value="{{ siglo }}" {% if filtros.siglo == siglo %}selected{% endif %}>{{ siglo }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="campo">
+      <label for="f-region">Región</label>
+      <select id="f-region" name="region">
+        <option value="">Todas</option>
+        {% for region in catalogos.regiones %}
+        <option value="{{ region.id_region }}" {% if filtros.region == region.id_region %}selected{% endif %}>{{ region.nombre }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="campo">
+      <label for="f-tipo">Tipo</label>
+      <select id="f-tipo" name="tipo">
+        <option value="">Todos</option>
+        {% for tipo in catalogos.tipos %}
+        <option value="{{ tipo.id_tipo }}" {% if filtros.tipo == tipo.id_tipo %}selected{% endif %}>{{ tipo.nombre }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+  <div class="panel-filtros__fila">
+    <div class="campo campo--corto">
+      <label for="f-desde">Desde el año</label>
+      <input id="f-desde" type="number" name="desde" value="{{ filtros.desde }}" placeholder="ej. 1900">
+    </div>
+    <div class="campo campo--corto">
+      <label for="f-hasta">Hasta el año</label>
+      <input id="f-hasta" type="number" name="hasta" value="{{ filtros.hasta }}" placeholder="ej. 1945">
+    </div>
+    <div class="campo">
+      <label for="f-orden">Ordenar por</label>
+      <select id="f-orden" name="orden">
+        <option value="cronologico" {% if filtros.orden == 'cronologico' %}selected{% endif %}>Cronología (antiguo → moderno)</option>
+        <option value="reciente" {% if filtros.orden == 'reciente' %}selected{% endif %}>Cronología (moderno → antiguo)</option>
+        <option value="nombre" {% if filtros.orden == 'nombre' %}selected{% endif %}>Nombre (A–Z)</option>
+        <option value="bajas" {% if filtros.orden == 'bajas' %}selected{% endif %}>Más letales</option>
+        <option value="duracion" {% if filtros.orden == 'duracion' %}selected{% endif %}>Mayor duración</option>
+      </select>
+    </div>
+    <label class="casilla">
+      <input type="checkbox" name="curso" value="1" {% if filtros.curso %}checked{% endif %}>
+      <span>Solo conflictos en curso</span>
+    </label>
+    <div class="panel-filtros__acciones">
+      <button class="boton boton--primario" type="submit">Aplicar filtros</button>
+      <a class="boton boton--secundario" href="{{ url_for('guerras') }}">Limpiar</a>
+    </div>
+  </div>
+</form>
+
+{% if guerras %}
+  {{ tabla_guerras(guerras) }}
+  <p class="nota nota--pie">
+    Los años anteriores a Cristo se muestran como «a.C.».
+    El enlace de cada guerra abre su artículo completo.
+  </p>
+{% else %}
+  <div class="estado-vacio">
+    <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="" width="52" height="52">
+    <p>No hay guerras que coincidan con los filtros seleccionados.</p>
+    <p class="nota"><a href="{{ url_for('guerras') }}">Quitar los filtros</a> o {{ '' }}<a href="{{ url_for('nueva') }}">añadir una nueva guerra</a>.</p>
+  </div>
+{% endif %}
+{% endblock %}

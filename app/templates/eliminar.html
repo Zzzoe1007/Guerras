@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block titulo %}Eliminar «{{ guerra.nombre }}» · Bellum{% endblock %}
+{% block descripcion %}Confirmación para eliminar un artículo del catálogo de guerras.{% endblock %}
+
+{% block pestanas %}
+<nav class="pestanas" aria-label="Eliminar artículo">
+  <a class="pestana" href="{{ url_for('guerra', id_guerra=guerra.id_guerra) }}">Leer</a>
+  <a class="pestana" href="{{ url_for('editar', id_guerra=guerra.id_guerra) }}">Editar</a>
+  <a class="pestana pestana--activa pestana--peligro" href="{{ url_for('eliminar', id_guerra=guerra.id_guerra) }}">Eliminar</a>
+</nav>
+{% endblock %}
+
+{% block contenido %}
+<header class="cabecera-articulo">
+  <h1>Eliminar «{{ guerra.nombre }}»</h1>
+  <p class="cabecera-articulo__sub">Esta acción no se puede deshacer.</p>
+</header>
+
+<div class="dialogo-peligro">
+  <div class="dialogo-peligro__icono" aria-hidden="true">!</div>
+  <div>
+    <h2>¿Seguro que quieres borrar este artículo?</h2>
+    <p>
+      Se eliminará la guerra <strong>{{ guerra.nombre }}</strong>
+      ({{ guerra.anio_inicio|rango_anios(guerra.anio_fin) }}, {{ guerra.region }})
+      junto con sus datos asociados:
+    </p>
+    <ul>
+      <li><strong>{{ guerra.num_paises }}</strong> {{ guerra.num_paises|plural('participación de país', 'participaciones de países') }}</li>
+      <li><strong>{{ guerra.num_batallas }}</strong> {{ guerra.num_batallas|plural('batalla', 'batallas') }}</li>
+      <li><strong>{{ guerra.num_tratados }}</strong> {{ guerra.num_tratados|plural('tratado', 'tratados') }}</li>
+      <li>y los bandos registrados para el conflicto</li>
+    </ul>
+    <p class="nota">Si solo quieres corregir datos, usa la opción
+      <a href="{{ url_for('editar', id_guerra=guerra.id_guerra) }}">Editar</a>.</p>
+  </div>
+</div>
+
+<form method="post" class="formulario__acciones">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="confirmar" value="si">
+  <button class="boton boton--peligro" type="submit">Sí, eliminar definitivamente</button>
+  <a class="boton boton--secundario" href="{{ url_for('guerra', id_guerra=guerra.id_guerra) }}">Cancelar y volver al artículo</a>
+</form>
+{% endblock %}

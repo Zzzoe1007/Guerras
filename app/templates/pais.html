@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% from "_macros.html" import estado_vacio %}
+
+{% block titulo %}{{ pais.nombre }} · Guerras y participaciones · Bellum{% endblock %}
+{% block descripcion %}Todas las guerras del catálogo en las que participó {{ pais.nombre }}.{% endblock %}
+
+{% block pestanas %}
+<nav class="pestanas" aria-label="País">
+  <a class="pestana" href="{{ url_for('guerras') }}">Índice</a>
+  <a class="pestana" href="{{ url_for('buscar') }}">Búsqueda</a>
+  <a class="pestana pestana--activa" href="{{ url_for('reportes') }}#paises">Reportes</a>
+  <a class="pestana pestana--derecha" href="{{ url_for('aleatoria') }}">Aleatoria ⤮</a>
+</nav>
+{% endblock %}
+
+{% block contenido %}
+<header class="cabecera-articulo">
+  <p class="sobretitulo">País o entidad histórica</p>
+  <h1>{{ pais.nombre }}</h1>
+  <p class="cabecera-articulo__sub">
+    {{ pais.continente }} ·
+    {% if pais.vigente %}Estado vigente{% else %}Entidad histórica{% endif %} ·
+    {{ participaciones|length }} {{ participaciones|length|plural('participación registrada', 'participaciones registradas') }}
+  </p>
+</header>
+
+{% set victorias = participaciones|selectattr('resultado_bando', 'equalto', 'Victoria')|list|length %}
+<div class="ficha-pais">
+  <div>
+    <h2>Resumen de participación</h2>
+    <p>
+      En el catálogo, <strong>{{ pais.nombre }}</strong> aparece en
+      <strong>{{ participaciones|length }}</strong>
+      {{ participaciones|length|plural('conflicto', 'conflictos') }}
+      y forma parte de un bando victorioso en
+      <strong>{{ victorias }}</strong>
+      {{ victorias|plural('ocasión', 'ocasiones') }}.
+    </p>
+    <p class="nota">
+      Las participaciones se extraen de la tabla relacional <code>participaciones</code>,
+      que conecta cada país con su bando y con la guerra correspondiente.
+    </p>
+  </div>
+  <ul class="lista-categorias">
+    <li><a href="{{ url_for('reportes') }}#paises">Ranking de países</a></li>
+    <li><a href="{{ url_for('buscar', q=pais.nombre) }}">Buscar «{{ pais.nombre }}»</a></li>
+    <li><a href="{{ url_for('guerras') }}">Índice completo de guerras</a></li>
+  </ul>
+</div>
+
+{% if participaciones %}
+<section class="bloque">
+  <h2 class="titulo-seccion"><span class="titulo-seccion__filete"></span>Guerras en las que participó</h2>
+  <div class="tabla-scroll">
+    <table class="wikitable">
+      <thead>
+        <tr><th>Guerra</th><th>Periodo</th><th>Siglo</th><th>Bando</th><th>Resultado</th></tr>
+      </thead>
+      <tbody>
+        {% for fila in participaciones %}
+        <tr>
+          <td><a href="{{ url_for('guerra', id_guerra=fila.id_guerra) }}">{{ fila.guerra }}</a></td>
+          <td class="nowrap">{{ fila.anio_inicio|rango_anios(fila.anio_fin) }}</td>
+          <td>{{ fila.siglo }}</td>
+          <td>{{ fila.bando }}</td>
+          <td>
+            {% if fila.resultado_bando %}
+              <span class="etiqueta etiqueta--{{ 'victoria' if 'victoria' in fila.resultado_bando|lower else ('derrota' if 'derrota' in fila.resultado_bando|lower else 'neutra') }}">{{ fila.resultado_bando }}</span>
+            {% else %}—{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% else %}
+  {{ estado_vacio("No hay participaciones registradas para este país.") }}
+{% endif %}
+{% endblock %}
