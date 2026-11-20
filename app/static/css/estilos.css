@@ -503,6 +503,11 @@ hr {
   color: var(--rojo);
 }
 
+.pestana--descarga {
+  color: var(--verde);
+  font-weight: 600;
+}
+
 .pestana--derecha {
   margin-left: auto;
   color: var(--texto-suave);
@@ -517,6 +522,20 @@ hr {
 .cabecera-articulo {
   border-bottom: 1px solid var(--borde);
   padding-bottom: 0.45rem;
+}
+
+.articulo__cabecera {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.articulo__descarga {
+  flex-shrink: 0;
+  margin-bottom: 0.15rem;
+  white-space: nowrap;
 }
 
 .articulo__cabecera h1,
@@ -2161,6 +2180,13 @@ hr {
     margin: -1rem -1rem 1rem;
     padding-left: 0.7rem;
     padding-right: 0.7rem;
+    padding-bottom: 0.35rem;
+    flex-wrap: wrap;
+    row-gap: 0.15rem;
+  }
+
+  .pestana--derecha {
+    margin-left: 0;
   }
 
   .portada-hero {
@@ -2201,6 +2227,10 @@ hr {
     float: none;
     width: 100%;
     margin: 0 0 1.2rem;
+  }
+
+  .articulo__descarga {
+    width: 100%;
   }
 
   .cifras__rejilla {

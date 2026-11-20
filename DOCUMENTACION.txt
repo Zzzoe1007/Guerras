@@ -1,0 +1,1405 @@
+================================================================================
+                 CATÁLOGO DE GUERRAS DE LA HISTORIA
+                 Documentación completa del proyecto
+================================================================================
+Versión del documento : 1.2
+Fecha                 : noviembre de 2026
+Base de datos         : catalogo_guerras (MySQL 8.0+ / MariaDB 10.5+)
+Backend               : Python 3.10+ (probado con Python 3.12)
+Interfaces            : web (Flask + Jinja2) y consola
+Autor                 : proyecto académico de bases de datos relacionales
+================================================================================
+
+
+ÍNDICE
+--------------------------------------------------------------------------------
+ 1. QUÉ ES ESTE PROYECTO Y QUÉ OBJETIVOS TIENE
+ 2. REQUISITOS ACADÉMICOS Y CÓMO SE CUMPLEN
+ 3. HERRAMIENTAS Y TECNOLOGÍAS UTILIZADAS
+ 4. ESTRUCTURA DE CARPETAS
+ 5. LA BASE DE DATOS
+    5.1. Nombre, codificación y convenciones
+    5.2. Modelo entidad-relación
+    5.3. Descripción de las 8 tablas
+    5.4. Relaciones y cardinalidades
+    5.5. Integridad: claves, restricciones e índices
+    5.6. Las 4 vistas
+    5.7. Volumen de datos
+    5.8. Decisiones de diseño importantes
+    5.9. Normalización
+    5.10. Cómo importar la base de datos
+    5.11. Consultas de comprobación
+ 6. LA CAPA PYTHON (BACKEND)
+ 7. LA INTERFAZ WEB
+ 8. GENERACIÓN DE PDF
+ 9. REPORTES Y CONSULTAS AVANZADAS
+10. INSTALACIÓN Y PUESTA EN MARCHA
+11. GUÍA DE USO
+12. GUION PARA LA DEFENSA DEL PROYECTO
+13. PREGUNTAS FRECUENTES DEL TRIBUNAL (CON RESPUESTAS)
+14. PROBLEMAS Y SOLUCIONES
+15. PRUEBAS REALIZADAS
+16. LIMITACIONES Y MEJORAS POSIBLES
+17. GLOSARIO
+18. LISTA DE COMPROBACIÓN ANTES DE ENTREGAR
+================================================================================
+
+
+--------------------------------------------------------------------------------
+1. QUÉ ES ESTE PROYECTO Y QUÉ OBJETIVOS TIENE
+--------------------------------------------------------------------------------
+
+El proyecto es un catálogo relacional de guerras de la historia. Permite
+consultar, registrar, editar y eliminar conflictos históricos, y generar
+reportes estadísticos y fichas descargables en PDF.
+
+No es solo una base de datos: incluye dos interfaces completas que comparten
+exactamente la misma lógica de negocio y los mismos datos:
+
+  * Una interfaz WEB con estética de enciclopedia (estilo Wikipedia), pensada
+    para la presentación visual del proyecto.
+  * Una aplicación de CONSOLA, útil como alternativa ligera y para demostrar el
+    CRUD sin depender del navegador.
+
+Contenido actual del catálogo:
+
+  * 34 guerras documentadas, desde la Antigüedad hasta conflictos actuales.
+  * 70 países o entidades históricas.
+  * 68 bandos.
+  * 137 participaciones de países en guerras.
+  * 70 batallas.
+  * 31 tratados o acuerdos de paz.
+  * 6 regiones históricas y 8 tipos de conflicto.
+
+Objetivos concretos:
+
+  1. Diseñar un esquema relacional normalizado con claves primarias y foráneas.
+  2. Cargar datos históricos reales y coherentes.
+  3. Implementar un CRUD completo desde Python.
+  4. Implementar consultas avanzadas (JOIN, agregaciones, subconsultas, CTE y
+     funciones de ventana).
+  5. Ofrecer una interfaz presentable para la defensa.
+  6. Documentar el proyecto y permitir su reproducción en otro ordenador.
+
+
+--------------------------------------------------------------------------------
+2. REQUISITOS ACADÉMICOS Y CÓMO SE CUMPLEN
+--------------------------------------------------------------------------------
+
+  REQUISITO                                  DÓNDE SE CUMPLE
+  -----------------------------------------  ---------------------------------
+  Base de datos relacional en MySQL          sql/catalogo_guerras.sql
+  Claves primarias                           Todas las tablas (id_...)
+  Claves foráneas                            guerras, bandos, participaciones,
+                                             batallas y tratados
+  Datos históricos reales                    34 guerras con bandos, batallas
+                                             y tratados
+  Script SQL importable                      Un único archivo .sql
+  Backend Python conectado a MySQL           app/db.py + mysql-connector
+  CRUD completo                              app/repositorio.py y web/consola
+  Consulta avanzada                          app/reportes.py (12 métodos) y
+                                             sql/consultas_avanzadas.sql (15)
+  Instrucciones de instalación               README.md y este documento
+  Interfaz visual                            app/web.py + plantillas + CSS
+  Ficha descargable                          Ruta /guerra/<id>/pdf (ReportLab)
+
+
+--------------------------------------------------------------------------------
+3. HERRAMIENTAS Y TECNOLOGÍAS UTILIZADAS
+--------------------------------------------------------------------------------
+
+3.1. MySQL / MariaDB
+  - Motos de base de datos relacional.
+  - Se ha probado con MariaDB 10.11 (compatible con MySQL 8.0+).
+  - Se usa InnoDB para soportar claves foráneas y transacciones.
+  - Codificación utf8mb4 para acentos, eñes y caracteres especiales.
+  - Se aprovechan: PRIMARY KEY, FOREIGN KEY, UNIQUE, CHECK, índices, ENUM,
+    vistas, funciones de agregación, CTE y funciones de ventana.
+
+3.2. phpMyAdmin
+  - Herramienta gráfica para importar el script SQL, revisar tablas y ejecutar
+    consultas. No es obligatorio: también se puede usar la consola de MySQL.
+
+3.3. Python 3.10+
+  - Lenguaje del backend, del CRUD y de la lógica de validación.
+  - Se ha probado con Python 3.12.
+
+3.4. mysql-connector-python
+  - Conector oficial de MySQL para Python.
+  - Permite consultas parametrizadas, cursores con resultados en diccionario y
+    control explícito de transacciones.
+
+3.5. Flask 3
+  - Microframework web que sirve las páginas, gestiona rutas y protege los
+    formularios.
+  - Se eligió por ser ligero, fácil de explicar y no necesitar compilación.
+
+3.6. Jinja2
+  - Motor de plantillas integrado en Flask.
+  - Permite reutilizar cabecera, barra lateral y macros, y escapar el HTML por
+    defecto para evitar inyección de código.
+
+3.7. HTML5, CSS3 y JavaScript
+  - Interfaz propia, sin frameworks ni CDNs.
+  - El CSS incluye diseño responsive, modo impresión y componentes tipo wiki.
+  - El JavaScript solo añade el menú móvil, el atajo «/» y el botón de
+    impresión. La web funciona aunque JavaScript esté desactivado.
+
+3.8. ReportLab
+  - Librería de Python para generar PDF.
+  - Se usa para crear la ficha descargable de cada guerra con tablas, estilos,
+    fuentes incrustadas y numeración de páginas.
+
+3.9. Git (opcional)
+  - El proyecto se puede versionar. No es necesario para ejecutarlo.
+
+Resumen de dependencias (requirements.txt):
+
+  mysql-connector-python>=8.3.0
+  Flask>=3.0
+  reportlab>=4.0
+
+
+--------------------------------------------------------------------------------
+4. ESTRUCTURA DE CARPETAS
+--------------------------------------------------------------------------------
+
+Guerra/
+├── main.py                        Aplicación de consola (menú y CRUD)
+├── run_web.py                     Servidor de la interfaz web
+├── requirements.txt               Dependencias de Python
+├── README.md                      Guía rápida de instalación y uso
+├── DOCUMENTACION.txt              Este documento
+├── .gitignore
+│
+├── app/
+│   ├── __init__.py                Versión del paquete
+│   ├── config.py                  Configuración de la conexión (variables de entorno)
+│   ├── db.py                      Conexión, cursores, COMMIT/ROLLBACK y errores
+│   ├── errores.py                 Excepciones propias del dominio
+│   ├── formato.py                 Formato de años, cifras, fechas y duraciones
+│   ├── repositorio.py             CRUD, validaciones y consultas del catálogo
+│   ├── reportes.py                Consultas avanzadas y estadísticas
+│   ├── pdf.py                     Generación de fichas PDF con ReportLab
+│   ├── ui.py                      Tablas ASCII y entradas de la consola
+│   ├── web.py                     Rutas, filtros Jinja, CSRF y errores web
+│   │
+│   ├── templates/                 Plantillas Jinja2
+│   │   ├── base.html              Cabecera, sidebar, avisos y pie
+│   │   ├── _macros.html           Tablas, infobox y pestañas reutilizables
+│   │   ├── index.html             Portada
+│   │   ├── buscar.html            Búsqueda global
+│   │   ├── guerras.html           Índice con filtros
+│   │   ├── guerra.html            Artículo de una guerra
+│   │   ├── formulario.html        Alta y edición
+│   │   ├── eliminar.html          Confirmación de borrado
+│   │   ├── reportes.html          Reportes y rankings
+│   │   ├── pais.html              Ficha de un país
+│   │   ├── ayuda.html             Guía de uso
+│   │   ├── error.html             Error genérico
+│   │   └── 404.html               Página no encontrada
+│   │
+│   └── static/
+│       ├── css/estilos.css        Diseño completo, responsive e impresión
+│       ├── js/app.js              Interacciones mínimas
+│       └── img/                   Logo, emblema y portada en SVG
+│
+└── sql/
+    ├── catalogo_guerras.sql       Esquema + datos + vistas (IMPORTAR ESTE)
+    └── consultas_avanzadas.sql    15 consultas de reporte para phpMyAdmin
+
+
+--------------------------------------------------------------------------------
+5. LA BASE DE DATOS
+--------------------------------------------------------------------------------
+
+5.1. NOMBRE, CODIFICACIÓN Y CONVENCIONES
+--------------------------------------------------------------------------------
+
+  Nombre de la base de datos : catalogo_guerras
+  Motor                       : InnoDB
+  Codificación                : utf8mb4
+  Convenciones de nombres     : minúsculas, guion bajo, nombres en español.
+  Claves primarias            : id_<entidad> (INT UNSIGNED AUTO_INCREMENT).
+  Claves foráneas             : fk_<tabla>_<referencia>.
+  Restricciones CHECK         : chk_<tabla>_<regla>.
+  Restricciones UNIQUE        : uq_<tabla>_<columnas>.
+  Índices                     : idx_<tabla>_<columna>.
+
+El script empieza creando la base de datos, la selecciona y después elimina las
+vistas y tablas si ya existían. Esto permite reimportarlo para dejar la base en
+un estado limpio y conocido.
+
+
+5.2. MODELO ENTIDAD-RELACIÓN
+--------------------------------------------------------------------------------
+
+Representación textual:
+
+  regiones (1) -------- (N) guerras (N) -------- (1) tipos_guerra
+                               |
+                               | 1
+                               |
+                               +---- (N) bandos
+                               |           | 1
+                               |           |
+                               |           +---- (N) participaciones
+                               |                         | N
+                               |                         |
+                               |                         +---- (1) paises
+                               |
+                               +---- (N) batallas
+                               |
+                               +---- (N) tratados
+
+  La tabla participaciones resuelve la relación N:M entre guerras y países.
+  Cada participación apunta además al bando concreto del país en esa guerra,
+  mediante una clave foránea compuesta (id_bando, id_guerra).
+
+
+5.3. DESCRIPCIÓN DE LAS 8 TABLAS
+--------------------------------------------------------------------------------
+
+(1) regiones
+    Propósito: agrupar los conflictos por región histórica.
+    Columnas:
+      id_region    INT UNSIGNED PK AUTO_INCREMENT
+      nombre       VARCHAR(60)  NOT NULL UNIQUE
+      continente   VARCHAR(40)  NOT NULL
+      descripcion  VARCHAR(200) NULL
+
+(2) tipos_guerra
+    Propósito: clasificar el conflicto (mundial, civil, de conquista...).
+    Columnas:
+      id_tipo      INT UNSIGNED PK AUTO_INCREMENT
+      nombre       VARCHAR(80)  NOT NULL UNIQUE
+      descripcion  VARCHAR(250) NULL
+
+(3) paises
+    Propósito: países y entidades históricas que participan en guerras.
+    Columnas:
+      id_pais      INT UNSIGNED PK AUTO_INCREMENT
+      nombre       VARCHAR(120) NOT NULL UNIQUE
+      codigo_iso2  CHAR(2)      NULL
+      continente   VARCHAR(40)  NOT NULL
+      vigente      BOOLEAN      NOT NULL DEFAULT TRUE
+      notas        VARCHAR(200) NULL
+    Restricciones:
+      chk_paises_vigente: vigente solo puede ser 0 o 1.
+    Nota: vigente = 0 permite representar entidades históricas que ya no
+    existen (por ejemplo, imperios).
+
+(4) guerras  (tabla principal)
+    Propósito: almacenar cada conflicto.
+    Columnas:
+      id_guerra      INT UNSIGNED PK AUTO_INCREMENT
+      nombre         VARCHAR(150) NOT NULL UNIQUE
+      anio_inicio    SMALLINT     NOT NULL
+      anio_fin       SMALLINT     NULL
+      fecha_inicio   DATE         NULL
+      fecha_fin      DATE         NULL
+      siglo          VARCHAR(20)  NOT NULL
+      id_tipo        INT UNSIGNED NOT NULL  FK -> tipos_guerra
+      id_region      INT UNSIGNED NOT NULL  FK -> regiones
+      lugar          VARCHAR(180) NOT NULL
+      resultado      VARCHAR(220) NULL
+      bajas_totales  INT UNSIGNED NULL
+      descripcion    TEXT         NULL
+      creado_en      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+      actualizado_en TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+                                  ON UPDATE CURRENT_TIMESTAMP
+    Restricciones:
+      chk_guerras_anios : anio_inicio <> 0 y anio_fin >= anio_inicio.
+      chk_guerras_fechas: fecha_fin >= fecha_inicio si ambas existen.
+      chk_guerras_bajas : bajas_totales >= 0.
+    Índices: anio_inicio, siglo, id_tipo, id_region.
+
+(5) bandos
+    Propósito: cada guerra puede tener dos o más bandos, y cada bando tiene su
+    propio resultado (victoria, derrota, indeciso, en curso).
+    Columnas:
+      id_bando     INT UNSIGNED PK AUTO_INCREMENT
+      id_guerra    INT UNSIGNED NOT NULL FK -> guerras (ON DELETE CASCADE)
+      nombre       VARCHAR(120) NOT NULL
+      resultado    ENUM('Victoria','Derrota','Indeciso','En curso') NULL
+      descripcion  VARCHAR(250) NULL
+    Restricciones:
+      uq_bandos_guerra_nombre UNIQUE (id_guerra, nombre)
+      uq_bandos_id_guerra     UNIQUE (id_bando, id_guerra)
+    La segunda restricción existe para que participaciones pueda usar una clave
+    foránea compuesta y evitar mezclar bandos de guerras distintas.
+
+(6) participaciones  (tabla intermedia N:M)
+    Propósito: indicar qué país participó en qué guerra, dentro de qué bando y
+    con cuántas tropas y bajas.
+    Columnas:
+      id_participacion INT UNSIGNED PK AUTO_INCREMENT
+      id_guerra        INT UNSIGNED NOT NULL FK -> guerras (CASCADE)
+      id_pais          INT UNSIGNED NOT NULL FK -> paises  (RESTRICT)
+      id_bando         INT UNSIGNED NOT NULL
+      tropas           INT UNSIGNED NULL
+      bajas            INT UNSIGNED NULL
+    Restricciones:
+      fk_part_bando_guerra: (id_bando, id_guerra) -> bandos(id_bando, id_guerra)
+                            ON DELETE CASCADE.
+      uq_part_guerra_pais : un país no puede repetirse en la misma guerra.
+      chk_part_bajas      : bajas >= 0.
+    Índice: id_pais.
+
+(7) batallas
+    Propósito: enfrentamientos concretos de una guerra.
+    Columnas:
+      id_batalla   INT UNSIGNED PK AUTO_INCREMENT
+      id_guerra    INT UNSIGNED NOT NULL FK -> guerras (CASCADE)
+      nombre       VARCHAR(150) NOT NULL
+      anio         SMALLINT     NOT NULL
+      fecha        DATE         NULL
+      lugar        VARCHAR(150) NULL
+      resultado    VARCHAR(180) NULL
+      descripcion  TEXT         NULL
+    Restricciones:
+      chk_batallas_anio: anio <> 0.
+    Índices: id_guerra, anio.
+
+(8) tratados
+    Propósito: acuerdos o tratados que cierran o modifican un conflicto.
+    Columnas:
+      id_tratado   INT UNSIGNED PK AUTO_INCREMENT
+      id_guerra    INT UNSIGNED NOT NULL FK -> guerras (CASCADE)
+      nombre       VARCHAR(160) NOT NULL
+      anio         SMALLINT     NULL
+      lugar        VARCHAR(120) NULL
+      descripcion  TEXT         NULL
+    Restricciones:
+      chk_tratados_anio: anio es NULL o distinto de 0.
+    Índice: id_guerra.
+
+
+5.4. RELACIONES Y CARDINALIDADES
+--------------------------------------------------------------------------------
+
+  regiones 1 ---- N guerras
+      Una región agrupa muchas guerras; cada guerra pertenece a una región.
+
+  tipos_guerra 1 ---- N guerras
+      Un tipo clasifica muchas guerras; cada guerra tiene un tipo.
+
+  guerras 1 ---- N bandos
+      Cada guerra define sus bandos (normalmente dos).
+
+  guerras 1 ---- N batallas
+      Cada batalla pertenece a una guerra.
+
+  guerras 1 ---- N tratados
+      Cada tratado pertenece a una guerra.
+
+  guerras N ---- M paises  (resuelta con participaciones)
+      Un país participa en muchas guerras y una guerra tiene muchos países.
+
+  bandos 1 ---- N participaciones
+      Cada participación indica el bando del país en esa guerra concreta.
+
+  paises 1 ---- N participaciones
+      Un país acumula participaciones en distintas guerras.
+
+  Cardinalidad total: 8 tablas, 10 claves foráneas y 4 vistas.
+
+
+5.5. INTEGRIDAD: CLAVES, RESTRICCIONES E ÍNDICES
+--------------------------------------------------------------------------------
+
+  * PRIMARY KEY: identifica de forma única cada fila.
+  * FOREIGN KEY: impide referencias a registros inexistentes.
+  * UNIQUE: evita duplicados (nombres de guerra, país y región; bandos
+    repetidos dentro de una guerra; país repetido en una guerra).
+  * CHECK: valida años, fechas y cifras no negativas.
+  * ENUM: restringe el resultado de un bando a cuatro valores válidos.
+  * Índices: aceleran los filtros por año, siglo, tipo, región, país y guerra.
+
+Política de borrado:
+
+  * ON DELETE CASCADE en bandos, participaciones, batallas y tratados:
+    al borrar una guerra se eliminan sus datos dependientes para no dejar
+    registros huérfanos.
+  * ON DELETE RESTRICT en tipos_guerra, regiones y paises:
+    no se puede borrar un país, tipo o región que esté en uso. Es una decisión
+    de seguridad histórica: primero se reasignan o eliminan las referencias.
+  * ON UPDATE CASCADE: si cambia un identificador, las referencias se
+    actualizan automáticamente.
+
+Ejemplo real de la clave foránea compuesta: si existiera el bando 7 de la
+guerra 3, la base rechaza una participación con (id_bando=7, id_guerra=5),
+porque ese bando no pertenece a la guerra 5. Esto evita incoherencias que una
+clave foránea simple no detectaría.
+
+
+5.6. LAS 4 VISTAS
+--------------------------------------------------------------------------------
+
+  vw_guerras_detalle
+    Une guerras con su tipo y región, y añade tres subconsultas: número de
+    países participantes, número de batallas y número de tratados.
+    Es la vista que usa la web para listar y mostrar artículos.
+
+  vw_bandos_participantes
+    Une guerras, bandos, participaciones y países. Devuelve una fila por país
+    participante con su bando, tropas y bajas.
+
+  vw_resumen_siglo
+    Agrupa por siglo: total de guerras, bajas registradas, promedio de bajas y
+    primer año del siglo.
+
+  vw_resumen_region
+    Agrupa por región con LEFT JOIN para incluir regiones sin guerras: total de
+    guerras, bajas y promedio.
+
+Las vistas no duplican datos: son consultas con nombre que se ejecutan en el
+momento. Sirven para simplificar la aplicación y demostrar reutilización de
+consultas.
+
+
+5.7. VOLUMEN DE DATOS
+--------------------------------------------------------------------------------
+
+  regiones ............ 6
+  tipos_guerra ........ 8
+  paises .............. 70
+  guerras ............. 34
+  bandos .............. 68
+  participaciones ..... 137
+  batallas ............ 70
+  tratados ............ 31
+
+  Total de filas de datos: 424 (sin contar vistas).
+
+
+5.8. DECISIONES DE DISEÑO IMPORTANTES
+--------------------------------------------------------------------------------
+
+  A) Años anteriores a Cristo en negativo.
+     El año 499 a.C. se guarda como -499. Así se pueden ordenar y comparar
+     años de forma numérica. La aplicación los muestra como «499 a.C.».
+     No existe el año 0: las restricciones CHECK lo rechazan.
+
+  B) Fechas exactas NULL en conflictos antiguos.
+     MySQL no admite valores DATE anteriores al 1000-01-01. Por eso, para la
+     Antigüedad y gran parte de la Edad Media se usan solo los años, y las
+     columnas fecha_inicio/fecha_fin quedan NULL. En conflictos modernos sí se
+     registran fechas completas.
+
+  C) El siglo se almacena calculado.
+     Al crear o editar una guerra, Python calcula el siglo a partir del año de
+     inicio: 1914 -> XX; -499 -> V a.C.; -58 -> I a.C. Se guarda en la columna
+     siglo para poder filtrar y agrupar sin recalcular en cada consulta.
+
+  D) El resultado se guarda por bando, no solo por guerra.
+     Esto permite responder «¿qué países acumulan más bandos victoriosos?»,
+     algo imposible si solo se guardara un resultado global.
+
+  E) Tabla intermedia con atributos.
+     participaciones no es una simple tabla de unión: además de id_guerra e
+     id_pais guarda id_bando, tropas y bajas. Eso la convierte en una entidad
+     con datos propios y enriquece los reportes.
+
+  F) Entidades históricas.
+     paises.vigente distingue Estados actuales de entidades desaparecidas
+     (imperios, reinos, coaliciones). El catálogo puede así incluir tanto
+     «Imperio Romano» como «Italia».
+
+
+5.9. NORMALIZACIÓN
+--------------------------------------------------------------------------------
+
+  Primera forma normal (1FN): todos los atributos son atómicos. No hay listas
+  ni valores separados por comas dentro de una columna.
+
+  Segunda forma normal (2FN): cada atributo no clave depende de la clave
+  completa. En participaciones, tropas y bajas dependen de la participación
+  concreta (guerra + país + bando), no de una parte de la clave.
+
+  Tercera forma normal (3FN): no hay dependencias transitivas. El nombre de la
+  región no se repite en guerras: se guarda una vez en regiones y se referencia
+  con id_region. Lo mismo ocurre con el tipo de conflicto. El nombre del país
+  no se repite en participaciones: se referencia con id_pais.
+
+  Resultado: un esquema normalizado, sin redundancia innecesaria y con
+  integridad referencial garantizada por el motor.
+
+
+5.10. CÓMO IMPORTAR LA BASE DE DATOS
+--------------------------------------------------------------------------------
+
+Opción A: phpMyAdmin (recomendada para XAMPP/WAMP)
+
+  1. Inicia Apache y MySQL desde el panel de XAMPP.
+  2. Abre http://localhost/phpmyadmin.
+  3. Entra con el usuario root (contraseña vacía por defecto en XAMPP).
+  4. Pestaña «Importar».
+  5. «Seleccionar archivo» -> sql/catalogo_guerras.sql.
+  6. Codificación: utf-8. Formato: SQL.
+  7. Pulsa «Continuar» o «Importar».
+  8. Deberían aparecer 8 tablas y 4 vistas en la base catalogo_guerras.
+
+  IMPORTANTE: el script elimina las tablas existentes con DROP TABLE IF EXISTS
+  antes de crearlas. Si ya tenías datos propios, se perderán. Haz una copia de
+  seguridad si es necesario.
+
+Opción B: consola de MySQL / MariaDB
+
+  mysql -u root -p < sql/catalogo_guerras.sql
+
+  En XAMPP, la ruta del cliente suele ser:
+  C:\xampp\mysql\bin\mysql.exe -u root < sql\catalogo_guerras.sql
+
+Opción C: desde phpMyAdmin, pestaña SQL
+  Copia y pega el contenido del archivo y ejecútalo. Es más lento con archivos
+  grandes, pero funciona.
+
+Comprobación rápida:
+
+  USE catalogo_guerras;
+  SHOW TABLES;
+  SELECT COUNT(*) FROM guerras;       -- debe dar 34
+  SELECT COUNT(*) FROM batallas;      -- debe dar 70
+
+
+5.11. CONSULTAS DE COMPROBACIÓN
+--------------------------------------------------------------------------------
+
+  -- Ver el detalle unido de una guerra
+  SELECT nombre, tipo, region, anio_inicio, anio_fin, bajas_totales
+  FROM vw_guerras_detalle
+  WHERE nombre LIKE '%Waterloo%';
+
+  -- Ver los bandos y países de la Segunda Guerra Mundial
+  SELECT guerra, bando, pais, tropas, bajas
+  FROM vw_bandos_participantes
+  WHERE guerra LIKE '%Segunda Guerra Mundial%';
+
+  -- Comprobar que no hay participaciones cruzadas entre guerras
+  SELECT COUNT(*) AS incoherencias
+  FROM participaciones pa
+  INNER JOIN bandos b
+    ON b.id_bando = pa.id_bando AND b.id_guerra = pa.id_guerra
+  WHERE b.id_bando IS NULL;
+
+  -- Ranking rápido
+  SELECT nombre, bajas_totales
+  FROM guerras
+  ORDER BY bajas_totales DESC
+  LIMIT 5;
+
+
+--------------------------------------------------------------------------------
+6. LA CAPA PYTHON (BACKEND)
+--------------------------------------------------------------------------------
+
+Flujo de una petición web:
+
+  Navegador
+     -> Flask (app/web.py): ruta, parámetros y validación básica
+     -> Repositorio/Reportes: consultas SQL parametrizadas
+     -> BaseDatos (app/db.py): conexión, cursor, COMMIT/ROLLBACK
+     -> MySQL
+     -> Plantilla Jinja2 -> HTML -> Navegador
+
+Módulos y responsabilidades:
+
+  app/config.py
+    Lee DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME y construye un objeto
+    inmutable ConfiguracionBD. También valida que el puerto sea numérico.
+
+  app/db.py
+    Gestiona la conexión con mysql-connector-python. Ofrece un context manager
+    que garantiza COMMIT si todo va bien y ROLLBACK si hay error, cerrando
+    siempre cursor y conexión. Traduce los errores de MySQL a excepciones
+    propias con mensajes comprensibles.
+
+  app/errores.py
+    Define ErrorCatalogo y sus subtipos: ErrorValidacion, ErrorNoEncontrado y
+    ErrorConflicto. La web los convierte en respuestas 400, 404 y 409.
+
+  app/repositorio.py
+    Corazón del CRUD. Valida y normaliza los datos, calcula el siglo, inserta,
+    actualiza, elimina, lista con filtros y devuelve fichas completas.
+    Todas las consultas usan parámetros (%s), nunca concatenación de valores.
+
+  app/reportes.py
+    Consultas avanzadas: resumen, distribución por siglo/región/tipo, rankings,
+    países, top por región, guerras sin batallas, búsqueda por bando y ficha por
+    país. Devuelve listas de diccionarios listas para las plantillas.
+
+  app/formato.py
+    Funciones compartidas por web y PDF: años a.C., rangos, separador de miles,
+    fechas y duración. Evita duplicar formato en dos sitios.
+
+  app/pdf.py
+    Genera la ficha PDF con ReportLab (ver sección 8).
+
+  app/ui.py
+    Utilidades de consola: tablas ASCII, lectura de enteros, confirmaciones.
+
+  app/web.py
+    Rutas Flask, filtros Jinja, contexto común (contadores y siglos), CSRF,
+    descarga de PDF y manejadores de error.
+
+  main.py
+    Menú de consola: listar, ver ficha, crear, actualizar, eliminar, reportes y
+    ayuda. También admite --demo para una demostración automática.
+
+  run_web.py
+    Arranca el servidor con opciones --host, --puerto y --debug.
+
+Validaciones destacadas:
+
+  * Nombre de guerra obligatorio, único y con longitud limitada.
+  * Año de inicio obligatorio; año 0 rechazado; año de fin >= año de inicio.
+  * Fechas opcionales; si existen, fin >= inicio.
+  * Tipo y región deben existir (la clave foránea lo garantiza y el repositorio
+    lo comprueba antes).
+  * Bajas y tropas no negativas.
+  * Descripción de texto libre, sin HTML interpretado.
+  * CSRF obligatorio en todas las escrituras de la web.
+
+Seguridad:
+
+  * Consultas parametrizadas: evita inyección SQL.
+  * Orden de listados con lista blanca: no se interpola texto del usuario.
+  * Jinja2 escapa el HTML por defecto: evita XSS.
+  * Token CSRF por sesión: evita envíos desde otras páginas.
+  * SECRET_KEY por variable de entorno para firmar la sesión.
+  * Mensajes de error controlados; el detalle técnico va a la consola.
+
+Transacciones:
+
+  Cada operación de escritura ocurre dentro de un context manager. Si el INSERT
+  o UPDATE falla, se hace ROLLBACK y no queda un estado a medias. Las lecturas
+  no hacen COMMIT.
+
+
+--------------------------------------------------------------------------------
+7. LA INTERFAZ WEB
+--------------------------------------------------------------------------------
+
+Rutas principales:
+
+  GET  /                              Portada
+  GET  /guerras                       Índice con filtros y orden
+  GET  /guerra/<id>                   Artículo completo
+  GET  /guerra/<id>/pdf               Descarga de la ficha en PDF
+  GET  /buscar?q=...                  Búsqueda global
+  GET  /guerra/nueva                  Formulario de alta
+  POST /guerra/nueva                  Crear
+  GET  /guerra/<id>/editar            Formulario de edición
+  POST /guerra/<id>/editar            Guardar cambios
+  GET  /guerra/<id>/eliminar          Confirmación
+  POST /guerra/<id>/eliminar          Borrado definitivo
+  GET  /reportes                      Reportes y rankings
+  GET  /pais/<id>                     Guerras de un país
+  GET  /aleatoria                     Redirige a un artículo al azar
+  GET  /ayuda                         Guía de uso
+
+Diseño:
+
+  * Cabecera fija con logotipo, buscador central y enlaces.
+  * Barra lateral con navegación, herramientas, siglos y contadores.
+  * Pestañas de artículo: Leer, Editar, Estadísticas, PDF y Eliminar.
+  * Ficha de datos (infobox) a la derecha del artículo.
+  * Tablas tipo wikitable, índice de contenidos y categorías al pie.
+  * Portada con artículo destacado, cifras, tipos, regiones, ranking y
+    cronología visual.
+  * Colores y tipografía inspirados en enciclopedias colaborativas.
+  * Recursos 100 % locales: funciona sin conexión a Internet.
+  * Diseño responsive: escritorio, tableta y móvil.
+  * Estilos de impresión para los reportes.
+  * Accesibilidad: salto al contenido, etiquetas en los campos, foco visible,
+    textos alternativos y contraste cuidado.
+
+Manejo de errores:
+
+  400 -> datos inválidos o CSRF caducado.
+  404 -> guerra o página inexistente.
+  409 -> conflicto de integridad (por ejemplo, nombre duplicado).
+  500 -> error interno inesperado.
+  503 -> sin conexión con la base de datos (incluye ayuda para resolverlo).
+
+Búsqueda:
+
+  Una sola consulta recorre y presenta resultados de guerras, países, bandos,
+  batallas y tratados. Los resultados se agrupan por tipo para que la página
+  sea legible.
+
+Filtros del índice:
+
+  * Texto libre.
+  * Siglo.
+  * Región.
+  * Tipo de conflicto.
+  * Año desde / hasta.
+  * Solo conflictos en curso.
+  * Orden: cronológico, reciente, nombre, más letales, mayor duración.
+
+
+--------------------------------------------------------------------------------
+8. GENERACIÓN DE PDF
+--------------------------------------------------------------------------------
+
+Cada guerra tiene una ficha descargable en PDF desde dos sitios:
+
+  * El botón «⤓ Descargar PDF» de la cabecera del artículo.
+  * La pestaña «PDF ⤓».
+
+Ruta:  GET /guerra/<id>/pdf
+
+El archivo se genera en memoria y se envía como adjunto con un nombre seguro,
+por ejemplo:  guerra-9-guerra-de-sucesion-espanola.pdf
+
+Contenido de la ficha:
+
+  1. Banda de marca «Bellum · Catálogo de Guerras de la Historia».
+  2. Título, tipo, región, periodo y siglo.
+  3. Ficha de datos en dos columnas: tipo, región, continente, lugar, inicio,
+     fin, duración, siglo, tropas, bajas, resultado, países, batallas y
+     tratados.
+  4. Contexto histórico completo.
+  5. Bandos, con una tabla de países, tropas y bajas por bando.
+  6. Batallas: año, nombre, descripción, lugar y resultado.
+  7. Tratados: año, nombre, lugar y descripción.
+  8. Cronología unificada de batallas y tratados.
+  9. Pie con la fecha de generación y la fuente de los datos.
+ 10. Numeración «Página X de Y» en todas las páginas.
+
+Detalles técnicos:
+
+  * ReportLab compone el documento en A4 con tablas y párrafos.
+  * Se incrustan fuentes DejaVu (Sans y Serif) para que acentos, eñes,
+    comillas angulares y guiones largos se vean correctamente.
+  * Si el sistema no tuviera DejaVu, se usan las fuentes estándar de PDF.
+  * Las tablas repiten cabecera al cambiar de página.
+  * Un control de salto evita que un título de sección quede solo al final.
+  * Los datos se leen de la misma base y del mismo repositorio que la web: el
+    PDF nunca se genera con información duplicada.
+  * No se guarda ningún archivo en disco: se crea un buffer en memoria por
+    petición.
+  * Si ReportLab no estuviera instalado, la web sigue funcionando y solo la
+    descarga muestra un error controlado indicando cómo instalarlo.
+
+Cómo probarlo:
+
+  python run_web.py
+  Abrir http://127.0.0.1:5000/guerra/9 y pulsar «Descargar PDF».
+
+También se puede generar sin navegador:
+
+  from app.pdf import generar_pdf_guerra
+  # datos = repositorio.obtener(id_guerra)
+  pdf_bytes = generar_pdf_guerra(datos)
+  open("ficha.pdf", "wb").write(pdf_bytes)
+
+
+--------------------------------------------------------------------------------
+9. REPORTES Y CONSULTAS AVANZADAS
+--------------------------------------------------------------------------------
+
+La web (/reportes) y la consola (opción 6) ofrecen:
+
+  * Resumen general del catálogo.
+  * Guerras por siglo, con bajas y promedio.
+  * Guerras por región, con continente, bajas y promedio.
+  * Guerras por tipo, con total y bajas.
+  * Ranking de las 10 guerras más letales.
+  * Conflictos de mayor duración.
+  * Países con más participaciones.
+  * Países con más bandos victoriosos.
+  * Top 3 de guerras más letales por región (RANK).
+  * Guerras sin batallas registradas.
+  * Búsqueda de guerras por bando.
+  * Ficha de un país con todas sus participaciones.
+
+Archivo sql/consultas_avanzadas.sql (15 consultas):
+
+   1. Resumen general del catálogo.
+   2. Filtrar guerras por siglo.
+   3. Filtrar guerras por región.
+   4. Buscar guerras por bando.
+   5. Top 10 de guerras con más bajas.
+   6. Guerras por siglo con total acumulado (función de ventana SUM OVER).
+   7. Top 3 más letales de cada región (CTE + RANK).
+   8. Países con más participaciones.
+   9. Países con más bandos victoriosos.
+  10. Guerras sin batallas (LEFT JOIN + IS NULL).
+  11. Guerras de un país concreto.
+  12. Distribución porcentual por tipo.
+  13. Guerras más largas (cálculo de duración).
+  14. Conflictos aún abiertos (anio_fin IS NULL).
+  15. Detalle completo de una guerra.
+
+Técnicas SQL demostradas:
+
+  * INNER JOIN y LEFT JOIN.
+  * GROUP BY con COUNT, SUM, AVG, ROUND y MIN.
+  * Subconsultas escalares y correlacionadas.
+  * EXISTS / NOT EXISTS y LEFT JOIN ... IS NULL.
+  * Common Table Expressions (WITH).
+  * Funciones de ventana: SUM() OVER y RANK() OVER (PARTITION BY ...).
+  * CASE para clasificar duraciones.
+  * ORDER BY con NULLS y límites.
+
+Ejemplo destacado (top 3 por región):
+
+  WITH ranking AS (
+      SELECT r.nombre AS region,
+             g.nombre AS guerra,
+             g.bajas_totales,
+             RANK() OVER (
+                 PARTITION BY g.id_region
+                 ORDER BY g.bajas_totales DESC
+             ) AS posicion
+      FROM guerras g
+      INNER JOIN regiones r ON r.id_region = g.id_region
+      WHERE g.bajas_totales IS NOT NULL
+  )
+  SELECT region, posicion, guerra, bajas_totales
+  FROM ranking
+  WHERE posicion <= 3
+  ORDER BY region, posicion;
+
+
+--------------------------------------------------------------------------------
+10. INSTALACIÓN Y PUESTA EN MARCHA
+--------------------------------------------------------------------------------
+
+Requisitos:
+
+  * Python 3.10 o superior.
+  * MySQL 8.0+ o MariaDB 10.5+ (XAMPP, WAMP, Laragon o servidor propio).
+  * Navegador moderno.
+  * No hace falta conexión a Internet para usar la web.
+
+Paso 1. Importar la base de datos
+
+  phpMyAdmin -> Importar -> sql/catalogo_guerras.sql
+  o bien:
+  mysql -u root -p < sql/catalogo_guerras.sql
+
+Paso 2. Crear un entorno virtual (recomendado)
+
+  Linux/macOS:
+    python3 -m venv .venv
+    source .venv/bin/activate
+
+  Windows (PowerShell):
+    python -m venv .venv
+    .venv\Scripts\Activate.ps1
+
+Paso 3. Instalar dependencias
+
+  python -m pip install -r requirements.txt
+
+Paso 4. Configurar la conexión
+
+  Variables de entorno reconocidas:
+
+    DB_HOST      servidor MySQL          (por defecto 127.0.0.1)
+    DB_PORT      puerto                  (por defecto 3306)
+    DB_USER      usuario                 (por defecto root)
+    DB_PASSWORD  contraseña              (por defecto vacía)
+    DB_NAME      base de datos           (por defecto catalogo_guerras)
+    SECRET_KEY   firma de sesión/CSRF    (clave de desarrollo por defecto)
+
+  Linux/macOS:
+    export DB_USER=root
+    export DB_PASSWORD=
+    export SECRET_KEY="una-clave-larga-y-secreta"
+
+  Windows PowerShell:
+    $env:DB_USER="root"
+    $env:DB_PASSWORD="1234"
+    $env:SECRET_KEY="una-clave-larga-y-secreta"
+
+  Windows CMD:
+    set DB_USER=root
+    set DB_PASSWORD=1234
+
+Paso 5. Arrancar la web
+
+  python run_web.py
+  Abrir http://127.0.0.1:5000/
+
+  Opciones:
+    python run_web.py --puerto 8000
+    python run_web.py --host 0.0.0.0     (acceso desde la red local)
+    python run_web.py --debug            (recarga automática)
+
+Paso 6. Usar la consola (opcional)
+
+  python main.py
+  python main.py --demo
+  python main.py --host localhost --usuario root --contrasena 1234
+
+  --demo ejecuta una demostración no interactiva: conexión, CRUD y reportes.
+
+Salida esperada de --demo (resumen):
+  ✔ Demostración completada: conexión, CRUD y reportes operativos.
+
+
+--------------------------------------------------------------------------------
+11. GUÍA DE USO
+--------------------------------------------------------------------------------
+
+11.1. Navegar
+
+  * La portada muestra el artículo destacado, las cifras y accesos rápidos.
+  * «Todas las guerras» abre el índice con filtros.
+  * «Artículo aleatorio» lleva a una guerra al azar.
+  * Los enlaces de país muestran todas sus participaciones.
+  * La barra lateral permite filtrar por siglo y abrir los reportes.
+
+11.2. Buscar
+
+  El buscador superior recorre guerras, países, bandos, batallas y tratados.
+  El atajo de teclado «/» lleva el foco al buscador.
+
+11.3. Crear una guerra
+
+  1. Pulsar «Crear» o «Añadir una guerra».
+  2. Completar nombre, tipo, región, lugar y año de inicio (obligatorios).
+  3. Opcionalmente: año de fin, fechas exactas, resultado, bajas y descripción.
+  4. Guardar. La aplicación calcula el siglo y redirige al artículo creado.
+
+  Para años a.C. se escribe el número en negativo: -499.
+  Para conflictos en curso se deja vacío el año de fin.
+
+11.4. Editar
+
+  Pestaña «Editar». Se cargan los datos actuales; al guardar se validan de nuevo
+  y se actualiza también el siglo si cambió el año de inicio.
+
+11.5. Eliminar
+
+  Pestaña «Eliminar». Se muestra un resumen de lo que se borrará y se exige
+  confirmación. La eliminación en cascada borra bandos, participaciones,
+  batallas y tratados de esa guerra.
+
+11.6. Descargar el PDF
+
+  Botón «Descargar PDF» o pestaña «PDF». El navegador descarga la ficha con la
+  información completa del conflicto.
+
+11.7. Reportes
+
+  Página «Reportes»: resumen, tablas por siglo/región/tipo, rankings, top por
+  región y guerras sin batallas. El botón «Imprimir» usa los estilos de
+  impresión del navegador.
+
+11.8. Consola
+
+  Menú principal:
+    1. Listar y filtrar guerras
+    2. Ver ficha completa
+    3. Registrar nueva guerra
+    4. Actualizar una guerra
+    5. Eliminar una guerra
+    6. Reportes y consultas avanzadas
+    7. Ayuda / información del proyecto
+    0. Salir
+
+  La consola comparte el repositorio y los reportes con la web; los cambios se
+  reflejan inmediatamente en ambas.
+
+
+--------------------------------------------------------------------------------
+12. GUION PARA LA DEFENSA DEL PROYECTO
+--------------------------------------------------------------------------------
+
+Duración recomendada: 12-15 minutos + preguntas.
+
+12.1. Antes de empezar (comprobaciones)
+
+  [ ] MySQL/MariaDB iniciado.
+  [ ] Base importada y verificada: SELECT COUNT(*) FROM guerras; -> 34.
+  [ ] Web arrancada: python run_web.py.
+  [ ] Pestañas abiertas: portada, artículo de ejemplo, reportes y ayuda.
+  [ ] Tener a mano un artículo con muchos datos (por ejemplo, la Segunda
+      Guerra Mundial) para enseñar bandos, batallas y tratados.
+  [ ] Tener abierta la consola o phpMyAdmin para enseñar el esquema.
+  [ ] Haber probado la descarga del PDF antes de la defensa.
+  [ ] Plan B: si falla la web, usar python main.py --demo y enseñar el SQL.
+
+12.2. Estructura sugerida y tiempos
+
+  (0:00 - 1:30) 1. Presentación y objetivo
+  ------------------------------------------------------------------------------
+  «El proyecto es un catálogo relacional de guerras de la historia. El objetivo
+  era diseñar una base de datos normalizada, cargarla con datos históricos
+  reales y construir un CRUD en Python con consultas avanzadas. Además he
+  añadido dos interfaces: una web con estética de enciclopedia y una consola, y
+  la descarga de cada ficha en PDF.»
+
+  Mencionar las cifras: 8 tablas, 4 vistas, 34 guerras, 70 países, 68 bandos,
+  137 participaciones, 70 batallas y 31 tratados.
+
+  (1:30 - 4:00) 2. Modelo de datos
+  ------------------------------------------------------------------------------
+  Enseñar el esquema (phpMyAdmin o el diagrama textual de la sección 5.2).
+
+  Frases clave:
+  «La tabla central es guerras. Se relaciona con tipos_guerra y regiones
+  mediante claves foráneas, y con bandos, batallas y tratados mediante
+  relaciones uno a muchos con borrado en cascada.»
+
+  «La relación muchos a muchos entre guerras y países se resuelve con la tabla
+  participaciones, que además guarda el bando, las tropas y las bajas. Es una
+  tabla intermedia con atributos propios.»
+
+  «Usé una clave foránea compuesta (id_bando, id_guerra) para impedir que una
+  participación apunte a un bando de otra guerra. Eso es integridad más allá de
+  la clave foránea simple.»
+
+  «Hay restricciones CHECK para años, fechas y cifras negativas, UNIQUE para
+  evitar duplicados e índices para acelerar los filtros.»
+
+  (4:00 - 6:00) 3. Demostración de la web
+  ------------------------------------------------------------------------------
+  * Portada: señalar artículo destacado, cifras y exploración por tipo/región.
+  * Abrir un artículo: enseñar infobox, contexto, bandos, batallas, tratados,
+    cronología y categorías.
+  * Pulsar «Descargar PDF» y abrir el archivo: «La ficha se genera al vuelo con
+    ReportLab a partir de los mismos datos; no hay documentos almacenados».
+
+  (6:00 - 8:00) 4. CRUD en vivo
+  ------------------------------------------------------------------------------
+  * Crear una guerra de prueba con datos mínimos (nombre, tipo, región, lugar,
+    año). Mostrar que redirige al artículo y calcula el siglo.
+  * Editar el lugar o las bajas.
+  * Eliminar y explicar la confirmación y el borrado en cascada.
+  * Mencionar el token CSRF: «Los formularios llevan un token de sesión; sin él,
+    la operación se rechaza con 400».
+
+  (8:00 - 10:00) 5. Consultas avanzadas
+  ------------------------------------------------------------------------------
+  Abrir /reportes:
+  * Resumen y distribución por siglo/región/tipo.
+  * Ranking de letalidad.
+  * Top 3 por región: explicar CTE + RANK() OVER (PARTITION BY región).
+  * Países con más participaciones y victorias.
+  * Guerras sin batallas: LEFT JOIN + IS NULL.
+
+  Abrir phpMyAdmin y ejecutar una consulta con JOIN y GROUP BY, por ejemplo la
+  de países con más participaciones. Señalar que las consultas están
+  parametrizadas en Python.
+
+  (10:00 - 11:30) 6. PDF y documentación
+  ------------------------------------------------------------------------------
+  «La ruta /guerra/<id>/pdf compone un A4 con ficha, contexto, bandos,
+  batallas, tratados y cronología. Incluye fuentes DejaVu incrustadas para los
+  acentos y numeración de páginas. Se genera en memoria, sin guardar archivos.»
+
+  Enseñar README.md y DOCUMENTACION.txt.
+
+  (11:30 - 13:30) 7. Decisiones técnicas y pruebas
+  ------------------------------------------------------------------------------
+  * Años a.C. en negativo y año 0 prohibido.
+  * Fechas NULL en la Antigüedad porque MySQL no admite DATE antes del año 1000.
+  * Siglo calculado en Python y almacenado para filtrar.
+  * Transacciones con COMMIT/ROLLBACK.
+  * 34 PDF generados sin errores; pruebas de rutas, CRUD, CSRF y 404.
+
+  (13:30 - 15:00) 8. Cierre
+  ------------------------------------------------------------------------------
+  «El resultado es un proyecto completo: modelo relacional normalizado, datos
+  reales, CRUD, reportes con SQL avanzado, web presentable, PDF y documentación.
+  Como mejoras futuras añadiría autenticación de usuarios, paginación, una API
+  REST y copias de seguridad automáticas.»
+
+12.3. Consejos para la exposición
+
+  * No leas el código: explica qué hace y por qué.
+  * Si una consulta es compleja, dibuja antes el flujo: tabla -> JOIN -> GROUP BY
+    -> resultado.
+  * Si te preguntan por algo que no implementaste, dilo y explica cómo lo
+    harías; no inventes.
+  * Ten el plan B preparado (consola + SQL) por si falla la red o el navegador.
+  * Practica la demo al menos dos veces cronometrada.
+
+
+--------------------------------------------------------------------------------
+13. PREGUNTAS FRECUENTES DEL TRIBUNAL (CON RESPUESTAS)
+--------------------------------------------------------------------------------
+
+P: ¿Por qué MySQL y no otra base de datos?
+R: Es relacional, gratuito, muy extendido y el profesor lo pedía. InnoDB ofrece
+   claves foráneas, transacciones y CHECK, que son justo las herramientas que
+   necesita el modelo.
+
+P: ¿Por qué Flask y no Django?
+R: Flask es un microframework: pocas piezas, fácil de explicar y suficiente para
+   el proyecto. Django habría añadido un ORM y una estructura que ocultarían el
+   SQL que quiero demostrar.
+
+P: ¿Dónde está el CRUD?
+R: En app/repositorio.py (crear, obtener, listar, actualizar, eliminar). Tanto
+   la web (app/web.py) como la consola (main.py) llaman a ese repositorio; no
+   hay lógica duplicada.
+
+P: ¿Cómo evitas la inyección SQL?
+R: Todas las consultas usan marcadores %s y parámetros. Nunca se concatenan
+   valores del usuario. El único texto que se interpola es el ORDER BY, y se
+   elige de una lista blanca cerrada.
+
+P: ¿Qué ocurre al borrar una guerra?
+R: Se borran en cascada sus bandos, participaciones, batallas y tratados por las
+   claves foráneas ON DELETE CASCADE. Los países, tipos y regiones no se borran
+   (RESTRICT) porque pueden estar en uso.
+
+P: ¿Por qué los años son negativos?
+R: Para poder ordenar y comparar numéricamente. -499 representa 499 a.C. La
+   aplicación lo muestra como «499 a.C.». El año 0 no existe y las restricciones
+   CHECK lo rechazan.
+
+P: ¿Por qué algunas fechas están vacías?
+R: MySQL no admite DATE anteriores al 1000-01-01. Para conflictos antiguos se
+   usan solo los años; las fechas exactas quedan NULL. En conflictos modernos sí
+   se guardan fechas completas.
+
+P: ¿Cómo se calcula el siglo?
+R: Con la fórmula ((año-1)//100)+1 para años positivos y ((abs(año)-1)//100)+1
+   para negativos, convirtiendo el número a romano. Ejemplos: 1914 -> XX,
+   -499 -> V a.C. Se guarda en la columna siglo para filtrar y agrupar.
+
+P: ¿Qué es una vista y para qué la usas?
+R: Una consulta con nombre almacenada en la base. No guarda datos; se ejecuta
+   cuando se consulta. La uso para centralizar JOINs y agregaciones y evitar
+   repetir SQL en la aplicación.
+
+P: ¿Qué es una CTE y dónde la usas?
+R: Una Common Table Expression, un resultado temporal definido con WITH. La uso
+   en el top 3 por región para calcular el ranking y luego filtrar posicion <= 3.
+
+P: ¿Qué es RANK() y en qué se diferencia de ROW_NUMBER()?
+R: RANK() asigna la misma posición a los empates y deja huecos; ROW_NUMBER()
+   asigna números consecutivos sin importar empates. Para «top 3» con posibles
+   empates, RANK() es más justo.
+
+P: ¿Cómo garantizas que un país no se repita en la misma guerra?
+R: Con la restricción UNIQUE (id_guerra, id_pais) en participaciones.
+
+P: ¿Cómo evitas que una participación apunte a un bando de otra guerra?
+R: Con la clave foránea compuesta (id_bando, id_guerra) que referencia a
+   bandos(id_bando, id_guerra). La base rechaza la combinación incoherente.
+
+P: ¿Qué pasa si falla un INSERT a mitad?
+R: El context manager de app/db.py hace ROLLBACK y cierra la conexión. No queda
+   un estado parcial.
+
+P: ¿Cómo proteges los formularios?
+R: Con un token CSRF guardado en la sesión y enviado en un campo oculto. Si no
+   coincide, la petición se rechaza con error 400.
+
+P: ¿La web funciona sin Internet?
+R: Sí. No usa CDNs ni fuentes externas: CSS, JavaScript e imágenes SVG son
+   locales. Solo necesita el servidor MySQL en local.
+
+P: ¿Cómo se genera el PDF?
+R: Con ReportLab, a partir de la misma ficha que devuelve el repositorio. Se
+   compone un documento A4 en memoria, con fuentes DejaVu incrustadas, tablas y
+   numeración de páginas, y se envía como adjunto.
+
+P: ¿Por qué no guardas los PDF en disco?
+R: Porque se generan al vuelo y siempre reflejan los datos actuales. Así no hay
+   archivos obsoletos ni que limpiar, y no se ocupa espacio.
+
+P: ¿Dónde se ve la normalización?
+R: En que cada dato vive en un solo sitio: regiones y tipos tienen su propia
+   tabla; los países no se repiten en participaciones; la relación N:M está en
+   una tabla intermedia. No hay grupos repetidos ni dependencias transitivas.
+
+P: ¿Por qué el resultado está en bandos y no solo en guerras?
+R: Porque un mismo conflicto puede tener varios bandos con resultados distintos.
+   Guardarlo por bando permite calcular victorias por país y rankings.
+
+P: ¿Cómo ampliarías el proyecto?
+R: Con autenticación y roles, paginación, una API REST, más entidades (líderes,
+   imágenes, fuentes), copias de seguridad y despliegue con un servidor WSGI.
+
+P: ¿Qué limitaciones tiene?
+R: No hay usuarios ni permisos; la web es de un solo administrador. No hay
+   paginación porque el volumen es pequeño. Las cifras históricas son
+   estimaciones y no se citan fuentes individuales. El servidor de Flask es de
+   desarrollo, no de producción.
+
+P: ¿Cómo lo pondrías en producción?
+R: Con un servidor WSGI (Gunicorn o uWSGI), HTTPS, SECRET_KEY fuerte, modo debug
+   desactivado, usuario de MySQL con permisos mínimos, copias de seguridad y
+   autenticación para las rutas de escritura.
+
+
+--------------------------------------------------------------------------------
+14. PROBLEMAS Y SOLUCIONES
+--------------------------------------------------------------------------------
+
+«Sin conexión con la base de datos» (error 503)
+  - Comprueba que MySQL/MariaDB está iniciado.
+  - Revisa DB_HOST, DB_PORT, DB_USER, DB_PASSWORD y DB_NAME.
+  - Verifica que la base catalogo_guerras existe y tiene tablas.
+  - En XAMPP: panel de control -> MySQL -> Start.
+
+«Access denied for user 'root'@'localhost'»
+  - La contraseña no es correcta. En XAMPP suele ser vacía.
+  - Define DB_PASSWORD con la contraseña real.
+  - Comprueba que el usuario tiene permisos sobre catalogo_guerras.
+
+«Unknown database 'catalogo_guerras'»
+  - No se ha importado el script. Impórtalo desde phpMyAdmin.
+
+«Table 'catalogo_guerras.guerras' doesn't exist»
+  - El script se importó en otra base o falló a mitad. Vuelve a importarlo y
+    revisa los mensajes de error.
+
+«Ya existe una guerra con ese nombre»
+  - El nombre es UNIQUE. Añade una aclaración entre paréntesis, por ejemplo
+    «Guerra Civil (España, 1936-1939)».
+
+«MySQL no admite fechas anteriores al año 1000»
+  - Deja fecha_inicio y fecha_fin vacías y usa solo los años (negativos si son
+    a.C.).
+
+«El formulario ha caducado o no es válido»
+  - El token CSRF no coincide. Recarga la página y vuelve a enviar. No envíes el
+    formulario desde otra pestaña antigua.
+
+Error 500 al abrir una página
+  - Mira la terminal donde corre run_web.py: allí aparece la traza.
+  - Arranca con --debug para ver el detalle durante el desarrollo.
+
+El PDF no se descarga
+  - Comprueba que reportlab está instalado: pip install -r requirements.txt.
+  - Revisa que la ruta /guerra/<id>/pdf responde 200.
+  - Si el error es 404, la guerra no existe.
+
+Los acentos se ven mal en la consola de Windows
+  - Usa Windows Terminal o PowerShell actualizado; el programa reconfigura la
+    salida a UTF-8, pero algunas consolas antiguas no lo respetan.
+
+El puerto 5000 está ocupado
+  - Arranca con otro puerto: python run_web.py --puerto 8000.
+
+
+--------------------------------------------------------------------------------
+15. PRUEBAS REALIZADAS
+--------------------------------------------------------------------------------
+
+Base de datos:
+  [x] Script importado en MariaDB 10.11 sin errores.
+  [x] 8 tablas, 4 vistas y todos los datos cargados.
+  [x] Conteos verificados: 34 guerras, 70 países, 68 bandos, 137
+      participaciones, 70 batallas, 31 tratados.
+  [x] Las 15 consultas de sql/consultas_avanzadas.sql se ejecutan correctamente.
+  [x] Restricciones probadas: nombre duplicado, año 0, fin anterior al inicio,
+      participación duplicada y bando de otra guerra.
+
+Consola:
+  [x] CRUD completo contra MariaDB real.
+  [x] main.py --demo termina con «Demostración completada».
+  [x] Reportes de consola sin errores.
+
+Web:
+  [x] Portada, búsqueda, índice, filtros, artículo, país, reportes, ayuda y 404.
+  [x] Artículo aleatorio con redirección.
+  [x] CRUD web: crear, leer, editar y eliminar.
+  [x] Formulario inválido devuelve 400 sin romper la aplicación.
+  [x] Petición sin token CSRF devuelve 400.
+  [x] Descarga de PDF de las 34 guerras, sin errores.
+  [x] PDF verificado con pdfinfo (A4, 1-2 páginas) y pdftotext (acentos y
+      contenido correctos).
+  [x] Capturas revisadas en Chrome a 1440 px y 390 px.
+  [x] CSS y JavaScript locales responden 200.
+
+Entorno probado:
+  Python 3.12, mysql-connector-python 26.10.0, Flask 3.1.3 y ReportLab 5.1.
+
+
+--------------------------------------------------------------------------------
+16. LIMITACIONES Y MEJORAS POSIBLES
+--------------------------------------------------------------------------------
+
+Limitaciones actuales:
+
+  * No hay autenticación: cualquier persona con acceso a la web puede escribir.
+  * No hay paginación; con 34 guerras no es necesario, pero con miles sí.
+  * El servidor de Flask es de desarrollo.
+  * Las fuentes históricas no se almacenan por guerra.
+  * No se pueden adjuntar imágenes propias a cada conflicto.
+
+Mejoras posibles, por orden de utilidad:
+
+  1. Usuarios y roles (lectura / edición / administración).
+  2. Paginación y búsqueda con índices de texto completo.
+  3. API REST con Flask para consumir los datos desde otras aplicaciones.
+  4. Entidades nuevas: líderes, fuentes bibliográficas, imágenes y mapas.
+  5. Copias de seguridad automáticas y registro de auditoría de cambios.
+  6. Despliegue con Gunicorn + Nginx, HTTPS y variables de entorno seguras.
+  7. Pruebas automatizadas con pytest y cobertura.
+  8. Exportación a CSV/Excel además de PDF.
+  9. Internacionalización (español/inglés).
+ 10. Docker Compose para levantar MySQL + aplicación con un comando.
+
+
+--------------------------------------------------------------------------------
+17. GLOSARIO
+--------------------------------------------------------------------------------
+
+  Base de datos relacional : conjunto de tablas relacionadas mediante claves.
+  Tabla                    : conjunto de filas con la misma estructura.
+  Fila / registro          : una entidad concreta (una guerra, un país...).
+  Columna / atributo       : una propiedad de la entidad.
+  Clave primaria (PK)      : identifica de forma única cada fila.
+  Clave foránea (FK)       : referencia a la clave primaria de otra tabla.
+  Integridad referencial   : la base impide referencias a filas inexistentes.
+  UNIQUE                   : restricción que impide valores duplicados.
+  CHECK                    : restricción que valida una condición.
+  Índice                   : estructura que acelera búsquedas por una columna.
+  Vista                    : consulta con nombre que se ejecuta al consultarla.
+  JOIN                     : combina filas de varias tablas por una condición.
+  GROUP BY                 : agrupa filas para aplicar agregaciones.
+  Agregación               : COUNT, SUM, AVG, MIN, MAX.
+  Subconsulta              : consulta dentro de otra consulta.
+  CTE (WITH)               : resultado temporal con nombre dentro de una consulta.
+  Función de ventana       : cálculo sobre un conjunto de filas relacionadas
+                             (RANK, SUM OVER...) sin colapsarlas.
+  Normalización            : organización de datos para evitar redundancia.
+  1FN, 2FN, 3FN            : niveles de normalización.
+  Transacción              : operación atómica que se confirma o se deshace.
+  COMMIT / ROLLBACK        : confirmar / deshacer una transacción.
+  CRUD                     : Create, Read, Update, Delete.
+  CSRF                     : ataque que fuerza el envío de un formulario ajeno;
+                             se evita con un token de sesión.
+  XSS                      : inyección de código en páginas; Jinja2 la evita
+                             escapando el HTML.
+  Inyección SQL            : introducir SQL malicioso en una consulta; se evita
+                             con consultas parametrizadas.
+  ORM                      : capa que traduce objetos a SQL (no se usa aquí).
+  WSGI                     : interfaz estándar entre Python y servidores web.
+  ReportLab                : librería de Python para generar PDF.
+
+
+--------------------------------------------------------------------------------
+18. LISTA DE COMPROBACIÓN ANTES DE ENTREGAR
+--------------------------------------------------------------------------------
+
+  [ ] Base importada en el ordenador de la presentación.
+  [ ] .venv creado e instalado requirements.txt.
+  [ ] Variables de entorno configuradas (o valores por defecto correctos).
+  [ ] python main.py --demo funciona.
+  [ ] python run_web.py arranca y abre la portada.
+  [ ] Se puede crear, editar y eliminar una guerra desde la web.
+  [ ] Se descarga el PDF de una guerra y se abre correctamente.
+  [ ] /reportes muestra todos los bloques.
+  [ ] README.md y DOCUMENTACION.txt están incluidos.
+  [ ] Copia de seguridad del proyecto (ZIP o repositorio Git).
+  [ ] Demo practicada al menos dos veces.
+  [ ] Plan B preparado: consola + phpMyAdmin.
+
+================================================================================
+                         FIN DE LA DOCUMENTACIÓN
+================================================================================

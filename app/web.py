@@ -16,6 +16,7 @@ sesión que protege los formularios).
 from __future__ import annotations
 
 import datetime as dt
+import io
 import os
 import secrets
 from typing import Any
@@ -27,6 +28,7 @@ from flask import (
     redirect,
     render_template,
     request,
+    send_file,
     session,
     url_for,
 )
@@ -40,73 +42,23 @@ from app.errores import (
     ErrorNoEncontrado,
     ErrorValidacion,
 )
+from app.formato import (
+    anio_texto as _anio_texto,
+    duracion as _duracion,
+    fecha_iso as _fecha_iso,
+    fecha_larga as _fecha_larga,
+    numero as _numero,
+    plural as _plural,
+    rango_anios as _rango_anios,
+)
+from app.pdf import generar_pdf_guerra, nombre_archivo_pdf
 from app.reportes import Reportes
 from app.repositorio import CAMPOS_EDITABLES, RepositorioGuerras
 
+
 # ----------------------------------------------------------------------------
-# Utilidades de plantillas
+# Utilidades de petición
 # ----------------------------------------------------------------------------
-def _anio_texto(anio: Any) -> str:
-    """Devuelve un año legible: 1914, 499 a.C. o un guion si falta."""
-    if anio is None or anio == "":
-        return "—"
-    try:
-        numero = int(anio)
-    except (TypeError, ValueError):
-        return str(anio)
-    if numero < 0:
-        return f"{abs(numero)} a.C."
-    return str(numero)
-
-
-def _rango_anios(inicio: Any, fin: Any) -> str:
-    if inicio is None:
-        return "—"
-    if fin is None:
-        return f"{_anio_texto(inicio)} – actualidad"
-    if inicio == fin:
-        return _anio_texto(inicio)
-    return f"{_anio_texto(inicio)} – {_anio_texto(fin)}"
-
-
-def _numero(valor: Any) -> str:
-    if valor is None or valor == "":
-        return "—"
-    try:
-        numero = int(valor)
-    except (TypeError, ValueError):
-        return str(valor)
-    return f"{numero:,}".replace(",", ".")
-
-
-def _fecha_iso(valor: Any) -> str:
-    """Formatea una fecha para un <input type="date">."""
-    if not valor:
-        return ""
-    if isinstance(valor, (dt.date, dt.datetime)):
-        return valor.strftime("%Y-%m-%d")
-    return str(valor)[:10]
-
-
-def _fecha_larga(valor: Any) -> str:
-    if not valor:
-        return "—"
-    if isinstance(valor, (dt.date, dt.datetime)):
-        return valor.strftime("%d/%m/%Y")
-    try:
-        return dt.date.fromisoformat(str(valor)[:10]).strftime("%d/%m/%Y")
-    except ValueError:
-        return str(valor)
-
-
-def _plural(cantidad: Any, singular: str, plural: str) -> str:
-    try:
-        numero = int(cantidad)
-    except (TypeError, ValueError):
-        numero = 0
-    return singular if numero == 1 else plural
-
-
 def _entero_opcional(valor: Any) -> int | None:
     if valor is None or str(valor).strip() == "":
         return None
@@ -114,26 +66,6 @@ def _entero_opcional(valor: Any) -> int | None:
         return int(valor)
     except (TypeError, ValueError):
         return None
-
-
-def _duracion(anio_inicio: Any, anio_fin: Any) -> str:
-    if anio_inicio is None:
-        return "—"
-    try:
-        inicio = int(anio_inicio)
-    except (TypeError, ValueError):
-        return "—"
-    if anio_fin is None:
-        anios = dt.date.today().year - inicio
-        return f"{anios} años (en curso)"
-    try:
-        fin = int(anio_fin)
-    except (TypeError, ValueError):
-        return "—"
-    anios = max(fin - inicio, 0)
-    if anios == 0:
-        return "menos de un año"
-    return f"{anios} {_plural(anios, 'año', 'años')}"
 
 
 # ----------------------------------------------------------------------------
@@ -370,6 +302,21 @@ def crear_app(configuracion: dict[str, Any] | None = None) -> Flask:
             total_bajas=total_bajas,
             cronologia=cronologia,
         )
+
+    @app.route("/guerra/<int:id_guerra>/pdf")
+    def guerra_pdf(id_guerra: int):
+        """Descarga la ficha completa de la guerra en formato PDF."""
+        datos = g.repo.obtener(id_guerra)
+        contenido = generar_pdf_guerra(datos)
+        respuesta = send_file(
+            io.BytesIO(contenido),
+            mimetype="application/pdf",
+            as_attachment=True,
+            download_name=nombre_archivo_pdf(datos["guerra"]),
+            max_age=0,
+        )
+        respuesta.headers["Cache-Control"] = "no-store"
+        return respuesta
 
     @app.route("/aleatoria")
     def aleatoria():

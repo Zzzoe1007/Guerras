@@ -61,6 +61,8 @@
   <a class="pestana pestana--activa" href="{{ url_for('guerra', id_guerra=guerra.id_guerra) }}">Leer</a>
   <a class="pestana" href="{{ url_for('editar', id_guerra=guerra.id_guerra) }}">Editar</a>
   <a class="pestana" href="{{ url_for('reportes') }}#ranking">Estadísticas</a>
+  <a class="pestana pestana--descarga" href="{{ url_for('guerra_pdf', id_guerra=guerra.id_guerra) }}"
+     title="Descargar la ficha completa en PDF">PDF ⤓</a>
   <a class="pestana pestana--peligro" href="{{ url_for('eliminar', id_guerra=guerra.id_guerra) }}">Eliminar</a>
   <a class="pestana pestana--derecha" href="{{ url_for('aleatoria') }}" title="Artículo aleatorio">Aleatoria ⤮</a>
 </nav>

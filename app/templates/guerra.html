@@ -8,8 +8,15 @@
 {% block contenido %}
 <article class="articulo">
   <header class="articulo__cabecera">
-    <h1>{{ guerra.nombre }}</h1>
-    <p class="articulo__origen">De Bellum, la enciclopedia histórica libre</p>
+    <div>
+      <h1>{{ guerra.nombre }}</h1>
+      <p class="articulo__origen">De Bellum, la enciclopedia histórica libre</p>
+    </div>
+    <a class="boton boton--secundario articulo__descarga"
+       href="{{ url_for('guerra_pdf', id_guerra=guerra.id_guerra) }}"
+       title="Descargar esta ficha en PDF">
+      ⤓ Descargar PDF
+    </a>
   </header>
 
   {{ infobox(guerra, total_bajas) }}

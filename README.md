@@ -51,15 +51,18 @@ python main.py --demo
 Guerra/
 ├── main.py                        # Aplicación de consola
 ├── run_web.py                     # Servidor de la interfaz web
-├── requirements.txt               # mysql-connector-python + Flask
+├── requirements.txt               # mysql-connector-python + Flask + ReportLab
 ├── README.md
+├── DOCUMENTACION.txt              # Documentación completa y guion de defensa
 ├── app/
 │   ├── __init__.py
 │   ├── config.py                  # Configuración por variables de entorno
 │   ├── db.py                      # Conexión, cursor y transacciones
 │   ├── errores.py                 # Excepciones de negocio
+│   ├── formato.py                 # Formato común de años, cifras y fechas
 │   ├── repositorio.py             # CRUD y validaciones
 │   ├── reportes.py                # Consultas avanzadas
+│   ├── pdf.py                     # Fichas PDF con ReportLab
 │   ├── ui.py                      # Tablas ASCII y entradas de usuario
 │   ├── web.py                     # Rutas, CSRF y errores de la interfaz web
 │   ├── templates/                 # Plantillas Jinja2 (estilo enciclopedia)
@@ -171,7 +174,7 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-Dependencias principales: `mysql-connector-python` (acceso a MySQL) y `Flask` (interfaz web). Flask instala a su vez Jinja2, Werkzeug, Click, ItsDangerous, MarkupSafe y Blinker.
+Dependencias principales: `mysql-connector-python` (acceso a MySQL), `Flask` (interfaz web) y `ReportLab` (generación de PDF). Flask instala a su vez Jinja2, Werkzeug, Click, ItsDangerous, MarkupSafe y Blinker.
 
 ---
 
@@ -290,6 +293,7 @@ python run_web.py
 | `/` | Portada con artículo destacado, cifras del catálogo, tipos, regiones, ranking y cronología |
 | `/guerras` | Índice completo con filtros por texto, siglo, región, tipo, rango de años, conflictos en curso y orden |
 | `/guerra/<id>` | Artículo con ficha de datos, contexto, bandos, países, batallas, tratados, cronología y categorías |
+| `/guerra/<id>/pdf` | Descarga la ficha completa del conflicto en PDF |
 | `/buscar?q=...` | Búsqueda simultánea en guerras, países, bandos, batallas y tratados |
 | `/guerra/nueva` | Formulario de alta con validaciones |
 | `/guerra/<id>/editar` | Formulario de edición |
@@ -305,10 +309,23 @@ python run_web.py
 - **Sin dependencias externas:** el CSS, el JavaScript y las ilustraciones SVG son locales, por lo que la web funciona sin conexión a Internet.
 - **Adaptable:** diseño responsive para portátil, tableta y móvil; incluye estilos de impresión para los reportes.
 - **Búsqueda integrada:** recorre nombres, descripciones, lugares, resultados, países, bandos, batallas y tratados.
+- **Descarga en PDF:** cada artículo se puede exportar con su ficha de datos, contexto, bandos, batallas, tratados y cronología.
 - **Formularios protegidos:** token CSRF por sesión, validación en Python y restricciones de MySQL.
 - **Errores claros:** páginas propias para 400, 404, 409, 500 y 503, con ayuda específica cuando no hay conexión con la base de datos.
 - **Accesibilidad:** enlace para saltar al contenido, etiquetas asociadas a los campos, foco visible, textos alternativos y contraste cuidado.
 - **Atajos:** la tecla `/` lleva al buscador y el botón «Imprimir» de los reportes lanza la impresión del navegador.
+
+### 7.4 Descarga en PDF
+
+Cada guerra incluye un botón **Descargar PDF** en la cabecera del artículo y una pestaña **PDF**. La ruta `/guerra/<id>/pdf` genera al vuelo un documento A4 con:
+
+- ficha de datos (tipo, región, lugar, periodo, duración, tropas, bajas, resultado y contadores);
+- contexto histórico completo;
+- bandos con sus países, tropas y bajas;
+- batallas, tratados y cronología unificada;
+- numeración de páginas y pie con la fecha de generación.
+
+La generación usa **ReportLab**, incrusta fuentes DejaVu para acentos y caracteres españoles, y se realiza en memoria (no se guardan archivos en disco). El nombre del archivo se construye de forma segura, por ejemplo `guerra-9-guerra-de-sucesion-espanola.pdf`. Si `reportlab` no estuviera instalado, la web sigue funcionando y solo la descarga muestra un error controlado con instrucciones.
 
 ---
 
@@ -422,7 +439,9 @@ Después se pueden agregar bandos, participaciones, batallas y tratados con sus 
 - [x] Interfaz web estilo enciclopedia con CRUD, búsqueda y reportes.
 - [x] Protección CSRF y manejo personalizado de errores en la web.
 - [x] Diseño responsive y recursos locales, sin CDNs.
+- [x] Descarga de cada guerra en PDF con ReportLab.
 - [x] Documentación de instalación, configuración y ejecución.
+- [x] Documento `DOCUMENTACION.txt` con guía completa y guion de defensa.
 
 ---
 
@@ -435,6 +454,7 @@ Después se pueden agregar bandos, participaciones, batallas y tratados con sus 
 - Reportes probados desde `python main.py --demo`.
 - Interfaz web probada con el cliente de pruebas de Flask: portada, búsqueda, índice, filtros, artículo, país, reportes, ayuda, 404 y artículo aleatorio.
 - CRUD web completo probado: alta, lectura, edición, borrado, formulario inválido y petición sin token CSRF.
+- Descarga PDF probada en las 34 guerras; documentos verificados con `pdfinfo` (A4) y `pdftotext` (contenido y acentos).
 - Capturas de la interfaz revisadas en Chrome en escritorio (1440 px) y móvil (390 px).
-- Verificado con Python 3.12, `mysql-connector-python` 26.10.0 y Flask 3.1.3.
+- Verificado con Python 3.12, `mysql-connector-python` 26.10.0, Flask 3.1.3 y ReportLab 5.1.
 # Guerras
